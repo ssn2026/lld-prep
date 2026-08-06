@@ -41,6 +41,8 @@ with Java source organized as:
   diagrams/
     <problem-name>.drawio  # UML class diagram + sequence diagram(s), see below
     generate.py             # script that produced it, kept for future regeneration
+  .vscode/
+    launch.json    # Run/Debug config for VS Code, see "VS Code Run Configuration" below
   README.md      # short problem description + patterns used; starts with a
                   # "Mode: Learning" or "Mode: Interview" banner (see Git
                   # Conventions below) so design ownership is clear at a glance
@@ -75,6 +77,40 @@ Workflow:
    (e.g. a new UML relationship type), add it to the shared module rather
    than duplicating one-off XML in the per-problem script.
 
+## VS Code Run Configuration (both modes, after implementation)
+
+The user runs everything through VS Code (no other IDE) — every problem
+needs a working Run/Debug setup out of the box, not just a shell command in
+a README. Since these problems have no build tool (plain `javac`/`java`,
+one `Main` class in the default package with CLI args for input/output
+paths), VS Code's bare codelens "Run" button can't supply those args, so a
+launch config is required, not optional.
+
+Create `<problem-name>/.vscode/launch.json`:
+```jsonc
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Main (scenario.txt)",
+            "request": "launch",
+            "mainClass": "Main",
+            "args": ["test/input/scenario.txt", "test/output/output.txt"],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
+```
+- Add one configuration per distinct test scenario file if a problem ends up
+  with more than one (e.g. a happy-path script and a separate edge-case
+  script) rather than overloading a single config's args.
+- This assumes the user opens the problem folder itself (e.g. `parking-lot/`)
+  as the VS Code workspace root, per the one-folder-per-problem structure —
+  don't design around opening the whole repo as the workspace.
+- Mention in the final summary that the "Extension Pack for Java" (Microsoft)
+  is required for this to work, in case it isn't already installed.
+
 ## Mode: Interview
 
 Triggered by: `/interview` or explicit request for "interview mode."
@@ -94,6 +130,8 @@ The user will describe or attach this design. Rules:
 - Generate at least a sequence diagram for the implemented flow (see
   "Diagram Generation" below) — the class diagram already exists as the
   user's draw.io design, so don't regenerate that one, just the runtime view.
+- Create the `.vscode/launch.json` run config (see "VS Code Run Configuration"
+  below) so the implementation is runnable from VS Code, not just the terminal.
 - Report clearly which design patterns were implemented and where.
 - Do not commit/push without explicit confirmation from the user.
 
@@ -108,7 +146,9 @@ Claude owns the full process for a given problem:
 4. Generate test inputs, run, and validate output
 5. Generate the UML class diagram + sequence diagram(s) (see
    "Diagram Generation" below)
-6. Explain everything simply:
+6. Create the `.vscode/launch.json` run config (see "VS Code Run
+   Configuration" below)
+7. Explain everything simply:
    - Walk the flow against the actual code, referencing file/class names
    - Explain *why* each design pattern was chosen, not just what it is
    - Suggest specific breakpoints/lines to inspect while stepping through
