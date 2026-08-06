@@ -1,0 +1,86 @@
+> FLOOR 1
+OK floor 1 added
+> SPOT 1 SMALL 1 1 5
+OK spot SMALL #1 added to floor 1 (exit=1 elevator=5)
+> SPOT 1 SMALL 2 5 1
+OK spot SMALL #2 added to floor 1 (exit=5 elevator=1)
+> SPOT 1 MEDIUM 1 2 4
+OK spot MEDIUM #1 added to floor 1 (exit=2 elevator=4)
+> SPOT 1 MEDIUM 2 4 2
+OK spot MEDIUM #2 added to floor 1 (exit=4 elevator=2)
+> SPOT 1 LARGE 1 3 3
+OK spot LARGE #1 added to floor 1 (exit=3 elevator=3)
+> FLOOR 2
+OK floor 2 added
+> SPOT 2 SMALL 1 1 3
+OK spot SMALL #1 added to floor 2 (exit=1 elevator=3)
+> SPOT 2 MEDIUM 1 1 4
+OK spot MEDIUM #1 added to floor 2 (exit=1 elevator=4)
+> SPOT 2 MEDIUM 2 4 1
+OK spot MEDIUM #2 added to floor 2 (exit=4 elevator=1)
+> SPOT 2 LARGE 1 1 5
+OK spot LARGE #1 added to floor 2 (exit=1 elevator=5)
+> SPOT 2 LARGE 2 5 1
+OK spot LARGE #2 added to floor 2 (exit=5 elevator=1)
+> STATUS
+STATUS
+Floor 1: SMALL=2/2 MEDIUM=2/2 LARGE=1/1 
+Floor 2: SMALL=1/1 MEDIUM=2/2 LARGE=2/2
+> PARK CAR KA01C1111 0 ELEVATOR
+OK parked KA01C1111 (ELEVATOR) -> ticket T1 spot F2-M2
+> PARK CAR KA01C2222 0 EXIT
+OK parked KA01C2222 (EXIT) -> ticket T2 spot F2-M1
+> PARK CAR KA01C3333 0 ANY
+OK parked KA01C3333 (ANY) -> ticket T3 spot F1-M1
+> PARK CAR KA01C4444 0
+OK parked KA01C4444 (ANY) -> ticket T4 spot F1-M2
+> PARK CAR KA01C5555 0 ANY
+OK parked KA01C5555 (ANY) -> ticket T5 spot F2-L1
+> STATUS
+STATUS
+Floor 1: SMALL=2/2 MEDIUM=0/2 LARGE=1/1 
+Floor 2: SMALL=1/1 MEDIUM=0/2 LARGE=1/2
+> UNPARK KA01C1111 30
+OK unparked KA01C1111 -> fee $20.0
+> PARK CAR KA01C6666 40 ELEVATOR
+OK parked KA01C6666 (ELEVATOR) -> ticket T6 spot F2-M2
+> STATUS
+STATUS
+Floor 1: SMALL=2/2 MEDIUM=0/2 LARGE=1/1 
+Floor 2: SMALL=1/1 MEDIUM=0/2 LARGE=1/2
+> UNPARK KA01C2222 90
+OK unparked KA01C2222 -> fee $40.0
+> UNPARK KA01C3333 200
+OK unparked KA01C3333 -> fee $80.0
+> STRATEGY FLAT
+OK pricing strategy switched to FLAT
+> UNPARK KA01C4444 210
+OK unparked KA01C4444 -> fee $50.0
+> UNPARK KA01C5555 220
+OK unparked KA01C5555 -> fee $50.0
+> UNPARK KA01C6666 230
+OK unparked KA01C6666 -> fee $50.0
+> STATUS
+STATUS
+Floor 1: SMALL=2/2 MEDIUM=2/2 LARGE=1/1 
+Floor 2: SMALL=1/1 MEDIUM=2/2 LARGE=2/2
+> PARK MOTORCYCLE KA01M1111 600 EXIT
+OK parked KA01M1111 (EXIT) -> ticket T7 spot F1-S1
+> PARK MOTORCYCLE KA01M1111 610 EXIT
+ERROR VehicleAlreadyParkedException: Vehicle KA01M1111 already has an active ticket
+> UNPARK KA01M1111 620
+OK unparked KA01M1111 -> fee $30.0
+> UNPARK KA01M1111 630
+ERROR InvalidTicketException: No active ticket found for vehicle KA01M1111
+> PARK TRUCK KA01T1000 700
+OK parked KA01T1000 (ANY) -> ticket T8 spot F2-L1
+> PARK TRUCK KA01T2000 700
+OK parked KA01T2000 (ANY) -> ticket T9 spot F1-L1
+> PARK TRUCK KA01T3000 700
+OK parked KA01T3000 (ANY) -> ticket T10 spot F2-L2
+> PARK TRUCK KA01T4000 700
+ERROR NoAvailableSpotException: No available spot for vehicle type TRUCK
+> STATUS
+STATUS
+Floor 1: SMALL=2/2 MEDIUM=2/2 LARGE=0/1 
+Floor 2: SMALL=1/1 MEDIUM=2/2 LARGE=0/2
