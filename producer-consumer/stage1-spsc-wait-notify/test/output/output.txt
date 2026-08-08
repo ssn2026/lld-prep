@@ -1,0 +1,19 @@
+Buffer capacity: 5, items: 30
+Total events logged: 60 (expected 60)
+Items consumed: 30 (expected 30)
+Exact-order check (SPSC + FIFO buffer must preserve order): PASS
+Count check (no item lost or duplicated): PASS
+Elapsed: 19ms
+OVERALL: PASS
+
+First 10 interleaved events (order varies run to run, that's expected):
+  PRODUCE 0
+  PRODUCE 1
+  PRODUCE 2
+  PRODUCE 3
+  PRODUCE 4
+  PRODUCE 5
+  CONSUME 0
+  CONSUME 1
+  CONSUME 2
+  CONSUME 3
