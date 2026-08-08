@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Main (demo)",
+            "request": "launch",
+            "mainClass": "Main",
+            "args": ["test/output/output.txt"],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

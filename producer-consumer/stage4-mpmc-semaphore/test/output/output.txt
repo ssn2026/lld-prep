@@ -1,0 +1,7 @@
+SemaphoreBoundedBuffer capacity: 5, 4 producers x 4 consumers, 60 total items
+Produced: 60/60, Consumed: 60/60
+No duplicate consumption: PASS
+Count matches (no loss): PASS
+Consumed set == produced set: PASS
+Elapsed: 17ms
+OVERALL: PASS
