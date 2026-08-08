@@ -46,7 +46,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [ ] Blackjack
 
 ### Booking / Commerce
-- [ ] Movie Booking System
+- [x] Movie Booking System `[learning-mode]`
 - [ ] Flight Booking System
 - [ ] Cart (Amazon-style)
 - [ ] Ecommerce / Inventory Management (Amazon/Zepto-style)
