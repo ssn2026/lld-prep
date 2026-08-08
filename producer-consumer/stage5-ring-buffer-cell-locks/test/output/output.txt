@@ -1,0 +1,17 @@
+RingBuffer capacity: 10 (< 60 total items, forces wraparound), 4 producers x 3 consumers
+Consumer 0 read 60/60 items
+Consumer 1 read 60/60 items
+Consumer 2 read 60/60 items
+All consumers read 60 items: PASS
+All consumers saw an identical, ordered stream: PASS
+No item lost, duplicated, or fabricated: PASS
+Elapsed: 69ms
+CORE OVERALL: PASS
+
+=== resetOffset() / seek demo (on consumer 0, after the run above) ===
+Retained window is roughly [50, 60]; consumer 0 is currently at 60
+Rewinding consumer 0 to offset 52 (a legal seek within the window)
+Re-read 8 items after rewind; matches original tail exactly: PASS
+Attempting an out-of-window seek to offset 45 (older than the retained floor)
+  correctly rejected: offset 45 is outside the retained window [50, 60]
+RESET-OFFSET DEMO: PASS
