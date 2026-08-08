@@ -1,0 +1,26 @@
+# Chess scenario: setup, illegal-move edge cases, then the fastest possible
+# real checkmate (Fool's Mate: 1. f3 e5 2. g4 Qh4#) to exercise CHECK ->
+# CHECKMATE state transitions and the GameOverException guard.
+
+BOARD
+STATUS
+
+# Edge case: White king can't move onto its own pawn at the start
+MOVE e1 e2
+
+# Edge case: wrong turn - Black tries to move before White has moved
+MOVE e7 e5
+
+# --- Fool's Mate ---
+MOVE f2 f3
+MOVE e7 e5
+MOVE g2 g4
+BOARD
+
+# Black queen delivers checkmate along the now-open h4-e1 diagonal
+MOVE d8 h4
+BOARD
+STATUS
+
+# Edge case: game is over, no further moves allowed
+MOVE a2 a3
