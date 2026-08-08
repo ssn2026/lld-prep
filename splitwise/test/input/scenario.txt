@@ -1,0 +1,40 @@
+# Three friends, three expenses paid by different people using all three
+# split strategies, producing a cyclic debt (A owes B, B owes C, C owes A)
+# before it gets partially settled.
+ADD_USER Alice alice@mail.com
+ADD_USER Bob bob@mail.com
+ADD_USER Charlie charlie@mail.com
+
+# EQUAL: Alice pays $300 for dinner, split 3 ways ($100 each) -> Bob and
+# Charlie each owe Alice $100.
+ADD_EXPENSE Dinner 300 Alice EQUAL Alice,Bob,Charlie
+
+# EXACT: Bob pays $150 for groceries, covering only Alice ($50) and Charlie
+# ($100) -> Alice owes Bob $50, Charlie owes Bob $100.
+ADD_EXPENSE Groceries 150 Bob EXACT Alice:50,Charlie:100
+
+# PERCENT: Charlie pays $400 for a trip, split 30/20/50 -> Alice owes
+# Charlie $120, Bob owes Charlie $80.
+ADD_EXPENSE Trip 400 Charlie PERCENT Alice:30,Bob:20,Charlie:50
+
+# Net pairwise balances after netting all three expenses:
+#   Bob owes Alice $50   (100 - 50)
+#   Alice owes Charlie $20  (120 - 100)
+#   Charlie owes Bob $20    (100 - 80)
+SHOW_ALL_BALANCES
+SHOW_BALANCES Alice
+SHOW_BALANCE Alice Charlie
+
+# Bob settles his $50 debt to Alice in full.
+SETTLE Bob Alice 50
+
+SHOW_ALL_BALANCES
+SHOW_BALANCE Alice Bob
+
+# --- Edge cases ---
+# Exact splits that don't sum to the expense amount.
+ADD_EXPENSE BadTest 100 Alice EXACT Bob:40,Charlie:50
+# Percentages that don't sum to 100.
+ADD_EXPENSE BadPercent 100 Alice PERCENT Bob:60,Charlie:60
+# Unknown user reference.
+SHOW_BALANCE Alice Dave

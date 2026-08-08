@@ -1,0 +1,44 @@
+> ADD_USER Alice alice@mail.com
+OK user Alice added
+> ADD_USER Bob bob@mail.com
+OK user Bob added
+> ADD_USER Charlie charlie@mail.com
+OK user Charlie added
+> ADD_EXPENSE Dinner 300 Alice EQUAL Alice,Bob,Charlie
+  [NOTIFY] 'Dinner' ($300.00) added by Alice
+  [NOTIFY] Bob owes Alice $100.00
+  [NOTIFY] Charlie owes Alice $100.00
+OK expense E1 'Dinner' ($300.0, EQUAL) added
+> ADD_EXPENSE Groceries 150 Bob EXACT Alice:50,Charlie:100
+  [NOTIFY] 'Groceries' ($150.00) added by Bob
+  [NOTIFY] Alice owes Bob $50.00
+  [NOTIFY] Charlie owes Bob $100.00
+OK expense E2 'Groceries' ($150.0, EXACT) added
+> ADD_EXPENSE Trip 400 Charlie PERCENT Alice:30,Bob:20,Charlie:50
+  [NOTIFY] 'Trip' ($400.00) added by Charlie
+  [NOTIFY] Alice owes Charlie $120.00
+  [NOTIFY] Bob owes Charlie $80.00
+OK expense E3 'Trip' ($400.0, PERCENT) added
+> SHOW_ALL_BALANCES
+Bob owes Alice $50.00
+Alice owes Charlie $20.00
+Charlie owes Bob $20.00
+> SHOW_BALANCES Alice
+Bob owes Alice $50.00
+Alice owes Charlie $20.00
+> SHOW_BALANCE Alice Charlie
+Alice owes Charlie $20.00
+> SETTLE Bob Alice 50
+  [NOTIFY] Bob paid Alice $50.00
+OK settled
+> SHOW_ALL_BALANCES
+Alice owes Charlie $20.00
+Charlie owes Bob $20.00
+> SHOW_BALANCE Alice Bob
+Alice and Bob are settled up
+> ADD_EXPENSE BadTest 100 Alice EXACT Bob:40,Charlie:50
+ERROR InvalidSplitException: Exact splits sum to 90.0 but expense amount is 100.0
+> ADD_EXPENSE BadPercent 100 Alice PERCENT Bob:60,Charlie:60
+ERROR InvalidSplitException: Percentages sum to 120.0 but must sum to 100
+> SHOW_BALANCE Alice Dave
+ERROR IllegalArgumentException: Unknown user: Dave
