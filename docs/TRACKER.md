@@ -1,5 +1,9 @@
 # LLD Progress Tracker
 
+Completed problems are marked `[learning-mode]` or `[interview-mode]` to
+match the design-ownership marker used in commit messages and each
+problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
+
 ## Design Patterns Checklist
 
 - [ ] SOLID Principles
@@ -24,7 +28,7 @@
 - [ ] Restaurant Management System
 - [ ] Car Rental System
 - [ ] Vehicle Rental Service (Zoomcar-style)
-- [ ] Parking Lot
+- [x] Parking Lot `[learning-mode]`
 - [ ] Parking Lot — maximize profit variant
 - [ ] Coupon Management System
 
@@ -50,7 +54,7 @@
 - [ ] Delivery Service
 
 ### Finance
-- [ ] Splitwise
+- [x] Splitwise `[learning-mode]`
 - [ ] Stock-Subscription System
 - [ ] Multi-threaded Concurrent Stock Exchange App
 - [ ] Stock Broker System
