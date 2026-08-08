@@ -37,7 +37,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [ ] LinkedIn
 
 ### Games — Board
-- [ ] Chess
+- [x] Chess `[learning-mode]`
 - [ ] Tic-Tac-Toe
 - [ ] Snake & Ladder
 - [ ] Ludo
