@@ -1,0 +1,18 @@
+=== Experiment 1: SafeBoundedBuffer (notifyAll), 4 producers x 4 consumers ===
+Produced: 60/60, Consumed: 60/60
+No duplicate consumption: PASS
+Count matches (no loss): PASS
+Consumed set == produced set: PASS
+Elapsed: 39ms
+OVERALL: PASS
+
+=== Experiment 2: UnsafeBoundedBuffer (notify) stress test ===
+  trial 1: DID NOT COMPLETE within 1500ms (produced=9/30, consumed=9/30) - likely lost wakeup
+  trial 2: DID NOT COMPLETE within 1500ms (produced=9/30, consumed=9/30) - likely lost wakeup
+  trial 3: DID NOT COMPLETE within 1500ms (produced=6/30, consumed=6/30) - likely lost wakeup
+  trial 4: DID NOT COMPLETE within 1500ms (produced=8/30, consumed=8/30) - likely lost wakeup
+  trial 5: DID NOT COMPLETE within 1500ms (produced=22/30, consumed=21/30) - likely lost wakeup
+  trial 6: DID NOT COMPLETE within 1500ms (produced=4/30, consumed=4/30) - likely lost wakeup
+Unsafe buffer hung on 6/6 trial(s).
+This is inherently non-deterministic - see GUIDE.md for why a 0-hang result here
+does not mean notify() was actually safe, just that this run got lucky.
