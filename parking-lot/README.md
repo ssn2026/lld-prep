@@ -68,6 +68,8 @@ parking-lot/
   test/
     input/scenario.txt   Command script covering happy path, exit/elevator/any preference, and edge cases
     output/output.txt    Captured run transcript
+  explainer/index.html   Interactive step-through: pick a vehicle/strategy, tap "Next step" to watch the
+                          real park/unpark call chain execute with live values (open directly in a browser)
 ```
 
 ## Running it
