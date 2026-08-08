@@ -64,6 +64,8 @@ splitwise/
   test/
     input/scenario.txt   All 3 split types, a cyclic debt, a settlement, and error cases
     output/output.txt    Captured run transcript
+  explainer/index.html   Interactive step-through: pick who paid and a split type, tap "Next step" to watch
+                          the real addExpense/settleUp call chain execute with live values (open directly in a browser)
 ```
 
 ## Running it

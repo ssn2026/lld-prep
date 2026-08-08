@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Splitwise — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+  .layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:820px){ .layout{ grid-template-columns:1fr; } }
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 18px; min-height:18px; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:96px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); }
+  .choice-btn .avatar { width:34px; height:34px; border-radius:50%; background:var(--open-fill); border:1.5px solid var(--open); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; color:var(--ink); }
+
+  .ledger { display:flex; flex-direction:column; gap:6px; margin:14px 0; }
+  .chip { padding:8px 10px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--paper); font-size:12px; color:var(--ink-dim); transition:all .3s; }
+  .chip.owed { border-color:var(--taken); background:var(--taken-fill); color:var(--ink); }
+  .chip.settled { border-color:var(--open); background:var(--open-fill); }
+  .chip.hl { transform:scale(1.03); border-color:var(--amber); box-shadow:0 0 0 4px var(--amber-glow); }
+
+  .receipt-stub { width:220px; margin:10px auto; background:var(--paper); border:1.5px dashed var(--line-strong); border-radius:10px; padding:12px; text-align:center; }
+  .receipt-stub .tid { font-size:16px; font-weight:800; }
+  .receipt-stub .row { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-dim); margin-top:4px; }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+
+  .trace-card { max-height:640px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Splitwise · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Pick who's paying to start — every click logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var USERS = [{id:'u1',name:'Alice'},{id:'u2',name:'Bob'},{id:'u3',name:'Charlie'},{id:'u4',name:'Dana'}];
+var EXPENSES = [{desc:'Dinner',amount:120},{desc:'Cab ride',amount:45},{desc:'Movie night',amount:60},{desc:'Groceries',amount:84}];
+var STRAT_CLASS = { EQUAL:'EqualSplitStrategy', EXACT:'ExactSplitStrategy', PERCENT:'PercentSplitStrategy' };
+var EXACT_PCT = [50,25,15,10];
+var PERCENT_PCT = [40,30,20,10];
+
+var state = { balances:{}, expenseSeq:1, current:null };
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function round2(v){ return Math.round(v*100)/100; }
+function userById(id){ return USERS.filter(function(u){return u.id===id;})[0]; }
+function initials(name){ return name.charAt(0); }
+
+function adjust(creditorId, debtorId, amount){
+  if (creditorId===debtorId || amount===0) return;
+  bump(creditorId, debtorId, amount);
+  bump(debtorId, creditorId, -amount);
+}
+function bump(a,b,delta){ state.balances[a]=state.balances[a]||{}; state.balances[a][b]=(state.balances[a][b]||0)+delta; }
+function getBalance(a,b){ return (state.balances[a] && state.balances[a][b]) || 0; }
+
+function equalSplit(amount, participants){
+  var n=participants.length, base=round2(amount/n), splits=[], running=0;
+  for (var i=0;i<n;i++){ var share = i===n-1 ? round2(amount-running) : base; splits.push({user:participants[i], amount:share}); running+=share; }
+  return splits;
+}
+function pctDerivedSplit(amount, participants, pct){
+  var splits=[], running=0;
+  for (var i=0;i<participants.length;i++){
+    var share = i===participants.length-1 ? round2(amount-running) : round2(amount*pct[i]/100);
+    splits.push({user:participants[i], amount:share}); running+=share;
+  }
+  return splits;
+}
+function computeSplitsReal(splitType, amount, participants){
+  if (splitType==='EQUAL') return equalSplit(amount, participants);
+  if (splitType==='EXACT') return pctDerivedSplit(amount, participants, EXACT_PCT);
+  return pctDerivedSplit(amount, participants, PERCENT_PCT);
+}
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+// ---------- ledger board ----------
+function pairKey(a,b){ return a<b ? a+'|'+b : b+'|'+a; }
+function renderLedger(){
+  var rows=[];
+  for (var i=0;i<USERS.length;i++) for (var j=i+1;j<USERS.length;j++){
+    var a=USERS[i], b=USERS[j], bal=getBalance(a.id,b.id);
+    var cls='chip', text;
+    if (Math.abs(bal)<0.01){ text=a.name+' & '+b.name+': settled up'; cls+=' settled'; }
+    else if (bal>0){ text=b.name+' owes '+a.name+' $'+bal.toFixed(2); cls+=' owed'; }
+    else { text=a.name+' owes '+b.name+' $'+(-bal).toFixed(2); cls+=' owed'; }
+    rows.push('<div class="'+cls+'" data-pair="'+pairKey(a.id,b.id)+'">'+text+'</div>');
+  }
+  return '<div class="ledger">'+rows.join('')+'</div>';
+}
+function highlightPair(aId,bId){
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'), function(c){ c.classList.remove('hl'); });
+  var el=document.querySelector('.chip[data-pair="'+pairKey(aId,bId)+'"]'); if (el) el.classList.add('hl');
+}
+
+// ---------- screens ----------
+function screenPickPayer(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Who paid?</h1><p class="stage-cap">Someone covers the bill for the group.</p>'+
+    '<div class="choice-row">'+USERS.map(function(u){
+      return '<button class="choice-btn" data-u="'+u.id+'"><span class="avatar">'+initials(u.name)+'</span><span class="label">'+u.name+'</span></button>';
+    }).join('')+'</div>'+renderLedger();
+  Array.prototype.forEach.call(el.querySelectorAll('[data-u]'), function(b){
+    b.addEventListener('click', function(){
+      var payer = userById(b.getAttribute('data-u'));
+      var meta = EXPENSES[Math.floor(Math.random()*EXPENSES.length)];
+      state.current = { payerId: payer.id, expenseMeta: meta };
+      logDivider('— Expense #'+state.expenseSeq+': '+meta.desc+' ($'+meta.amount.toFixed(2)+') —');
+      logStep('User paidBy = userRepository.findById("'+payer.id+'");', 'found: '+payer.name);
+      screenPickSplitType();
+    });
+  });
+}
+
+function screenPickSplitType(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>How should it split?</h1><p class="stage-cap">'+state.current.expenseMeta.desc+' — $'+state.current.expenseMeta.amount.toFixed(2)+' across all 4 friends.</p>'+
+    '<div class="choice-row">'+
+    [['EQUAL','Equal','same share each'],['EXACT','Exact','pre-agreed $ amounts'],['PERCENT','Percent','by percentage']].map(function(s){
+      return '<button class="choice-btn" data-t="'+s[0]+'"><span class="label">'+s[1]+'</span><span class="sub">'+s[2]+'</span></button>';
+    }).join('')+'</div>'+renderLedger();
+  Array.prototype.forEach.call(el.querySelectorAll('[data-t]'), function(b){
+    b.addEventListener('click', function(){
+      var type=b.getAttribute('data-t');
+      logStep('SplitStrategy strategy = SplitStrategyFactory.getStrategy('+type+');', 'dispatches to '+STRAT_CLASS[type]);
+      screenAddExpenseSteps(type);
+    });
+  });
+}
+
+function buildAddExpenseSteps(splitType){
+  var payer=userById(state.current.payerId), amount=state.current.expenseMeta.amount, participants=USERS, steps=[];
+  steps.push({code:'for (String id : participantUserIds) participants.add(userRepository.findById(id));',
+    detail:'4 participants: '+participants.map(function(u){return u.name;}).join(', ')});
+
+  if (splitType==='EQUAL'){
+    var base=round2(amount/4);
+    steps.push({code:'double baseShare = round2(totalAmount / participants.size());', detail:'round2('+amount.toFixed(2)+' / 4) = $'+base.toFixed(2)+' — last participant absorbs rounding'});
+  } else if (splitType==='EXACT'){
+    var shares=pctDerivedSplit(amount,participants,EXACT_PCT), sum=shares.reduce(function(a,s){return a+s.amount;},0);
+    steps.push({code:'if (Math.abs(sum - totalAmount) > EPSILON) throw InvalidSplitException;', detail:'sum($'+sum.toFixed(2)+') vs totalAmount($'+amount.toFixed(2)+') → valid ✓'});
+  } else {
+    var pctSum=PERCENT_PCT.reduce(function(a,b){return a+b;},0);
+    steps.push({code:'if (Math.abs(percentSum - 100.0) > EPSILON) throw InvalidSplitException;', detail:'percentSum('+pctSum+') vs 100 → valid ✓'});
+  }
+
+  var splits=computeSplitsReal(splitType, amount, participants);
+  steps.push({code:'List<Split> splits = strategy.computeSplits(totalAmount, participants, shareInputs);',
+    detail: splits.map(function(s){return s.user.name+': $'+s.amount.toFixed(2);}).join('  ·  ')});
+
+  var expenseId='E'+state.expenseSeq;
+  steps.push({code:'Expense expense = new Expense("'+state.current.expenseMeta.desc+'", '+amount.toFixed(2)+', paidBy, '+splitType+', splits);',
+    detail: expenseId+' created (id auto-assigned)',
+    effect:function(){ state.current.expense={id:expenseId, desc:state.current.expenseMeta.desc, amount:amount, payer:payer, splits:splits}; }});
+
+  splits.forEach(function(s){
+    if (s.user.id===payer.id){
+      steps.push({code:'balanceSheet.adjust(paidBy, split.getUser(), split.getAmount());  // '+s.user.name,
+        detail:'creditor.equals(debtor) → true, skipped — you can\'t owe yourself'});
+    } else {
+      steps.push({code:'balanceSheet.adjust(paidBy, split.getUser(), split.getAmount());  // '+s.user.name,
+        detail: payer.name+' is now owed $'+s.amount.toFixed(2)+' more by '+s.user.name,
+        effect:function(uid, amt){ return function(){ adjust(payer.id, uid, amt); highlightPair(payer.id, uid); }; }(s.user.id, s.amount)});
+    }
+  });
+
+  steps.push({code:'for (ExpenseObserver observer : observers) observer.onExpenseAdded(expense);',
+    detail:'ConsoleNotifier: "'+payer.name+' added '+state.current.expenseMeta.desc+' ($'+amount.toFixed(2)+')"'});
+  return steps;
+}
+
+function screenAddExpenseSteps(splitType){
+  var steps=buildAddExpenseSteps(splitType), idx=0; render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>Watch it happen</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderLedger()+'<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ state.expenseSeq++; setTimeout(screenReceipt,250); } else { render(); }
+    });
+  }
+}
+
+function screenReceipt(){
+  var e=state.current.expense;
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Expense settled into the ledger</h1><p class="stage-cap">'+e.id+' — '+esc(e.desc)+'</p>'+
+    '<div class="receipt-stub"><div class="tid mono">'+esc(e.id)+'</div>'+
+    '<div class="row"><span>Paid by</span><span class="mono">'+esc(e.payer.name)+'</span></div>'+
+    '<div class="row"><span>Amount</span><span class="mono">$'+e.amount.toFixed(2)+'</span></div></div>'+
+    renderLedger()+
+    '<div class="actions"><button class="cta ghost" id="settle">Settle the biggest balance</button>'+
+    '<button class="cta" id="again">Add another expense ↻</button></div>';
+  document.getElementById('again').addEventListener('click', function(){ state.current=null; screenPickPayer(); });
+  document.getElementById('settle').addEventListener('click', settleBiggest);
+}
+
+function settleBiggest(){
+  var best=null, bestAbs=0;
+  for (var i=0;i<USERS.length;i++) for (var j=i+1;j<USERS.length;j++){
+    var bal=getBalance(USERS[i].id,USERS[j].id);
+    if (Math.abs(bal)>bestAbs){ bestAbs=Math.abs(bal); best = bal>0 ? {payee:USERS[i],payer:USERS[j],amount:bal} : {payee:USERS[j],payer:USERS[i],amount:-bal}; }
+  }
+  if (!best){ logStep('// settleUp skipped', 'everyone is already settled up'); screenReceipt(); return; }
+  logDivider('— Settling: '+best.payer.name+' → '+best.payee.name+' —');
+  logStep('settleUp("'+best.payer.id+'", "'+best.payee.id+'", '+best.amount.toFixed(2)+');', best.payer.name+' pays '+best.payee.name+' $'+best.amount.toFixed(2));
+  logStep('balanceSheet.adjust(payee, payer, -amount);', 'balance moves toward $0.00',
+    function(){ adjust(best.payee.id, best.payer.id, -best.amount); highlightPair(best.payee.id, best.payer.id); });
+  logStep('for (ExpenseObserver observer : observers) observer.onSettlement(payer, payee, amount);',
+    'ConsoleNotifier: "'+best.payer.name+' paid '+best.payee.name+' $'+best.amount.toFixed(2)+'"');
+  setTimeout(screenReceipt, 250);
+}
+
+screenPickPayer();
+})();
+</script>
+</body>
+</html>
