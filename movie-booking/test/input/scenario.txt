@@ -1,0 +1,50 @@
+# Setup: 2 theaters in 2 cities, 2 movies, a few shows
+THEATER T1 PVR_Andheri Mumbai
+THEATER T2 INOX_Indiranagar Bangalore
+
+MOVIE M1 Inception 148
+MOVIE M2 Interstellar 169
+
+# SHOW <showId> <movieId> <theaterId> <screenId> <screenName> <rows> <seatsPerRow> <startOffsetMinutes> <basePrice>
+# 5 rows x 4 seats/row -> rows A,B REGULAR; row C PREMIUM; rows D,E RECLINER
+SHOW SH1 M1 T1 S1 Screen1 5 4 180 250
+SHOW SH2 M2 T2 S1 Screen1 5 4 240 300
+
+# --- Search ---
+SEARCH Inception Mumbai
+SEARCH Inception Bangalore
+SEARCH Interstellar Bangalore
+
+# --- Seat availability before any booking ---
+SEATS SH1
+
+# --- Happy path booking: mix of seat types ---
+BOOK SH1 U1 Alice alice@test.com A1,C2,E1
+
+# Seats should now reflect fewer available
+SEATS SH1
+
+# --- Edge case: double-booking an already-booked seat ---
+BOOK SH1 U2 Bob bob@test.com A1
+
+# --- Edge case: booking a seat that doesn't exist ---
+BOOK SH1 U2 Bob bob@test.com Z9
+
+# --- Another valid booking on a different show ---
+BOOK SH2 U3 Carol carol@test.com B1,B2
+
+# --- Cancel the first booking, seats should free up ---
+CANCEL BK1
+SEATS SH1
+
+# --- Edge case: cancelling an already-cancelled booking ---
+CANCEL BK1
+
+# --- Edge case: cancelling a booking that never existed ---
+CANCEL BK999
+
+# --- Edge case: booking on a show that doesn't exist ---
+BOOK SH999 U1 Alice alice@test.com A1
+
+# --- Re-book the freed seat to confirm cancellation actually released it ---
+BOOK SH1 U4 Dan dan@test.com A1

@@ -1,0 +1,44 @@
+> THEATER T1 PVR_Andheri Mumbai
+OK theater T1 (PVR_Andheri, Mumbai) added
+> THEATER T2 INOX_Indiranagar Bangalore
+OK theater T2 (INOX_Indiranagar, Bangalore) added
+> MOVIE M1 Inception 148
+OK movie M1 'Inception' (148 min) added
+> MOVIE M2 Interstellar 169
+OK movie M2 'Interstellar' (169 min) added
+> SHOW SH1 M1 T1 S1 Screen1 5 4 180 250
+OK show SH1 added: Inception at PVR_Andheri screen Screen1 (20 seats, base $250.0)
+> SHOW SH2 M2 T2 S1 Screen1 5 4 240 300
+OK show SH2 added: Interstellar at INOX_Indiranagar screen Screen1 (20 seats, base $300.0)
+> SEARCH Inception Mumbai
+SEARCH found 1 show(s):
+  SH1 @ PVR_Andheri 2026-08-08T12:00
+> SEARCH Inception Bangalore
+SEARCH no shows found for 'Inception' in Bangalore
+> SEARCH Interstellar Bangalore
+SEARCH found 1 show(s):
+  SH2 @ INOX_Indiranagar 2026-08-08T13:00
+> SEATS SH1
+SEATS 20 available: A1(REGULAR) A2(REGULAR) A3(REGULAR) A4(REGULAR) B1(REGULAR) B2(REGULAR) B3(REGULAR) B4(REGULAR) C1(PREMIUM) C2(PREMIUM) C3(PREMIUM) C4(PREMIUM) D1(PREMIUM) D2(PREMIUM) D3(PREMIUM) D4(PREMIUM) E1(RECLINER) E2(RECLINER) E3(RECLINER) E4(RECLINER)
+> BOOK SH1 U1 Alice alice@test.com A1,C2,E1
+OK booked [A1, C2, E1] -> booking BK1 total $1125.0
+> SEATS SH1
+SEATS 17 available: A2(REGULAR) A3(REGULAR) A4(REGULAR) B1(REGULAR) B2(REGULAR) B3(REGULAR) B4(REGULAR) C1(PREMIUM) C3(PREMIUM) C4(PREMIUM) D1(PREMIUM) D2(PREMIUM) D3(PREMIUM) D4(PREMIUM) E2(RECLINER) E3(RECLINER) E4(RECLINER)
+> BOOK SH1 U2 Bob bob@test.com A1
+ERROR SeatNotAvailableException: Seat A1 is already booked for show SH1
+> BOOK SH1 U2 Bob bob@test.com Z9
+ERROR SeatNotAvailableException: Seat Z9 does not exist on show SH1
+> BOOK SH2 U3 Carol carol@test.com B1,B2
+OK booked [B1, B2] -> booking BK2 total $600.0
+> CANCEL BK1
+OK cancelled booking BK1
+> SEATS SH1
+SEATS 20 available: A1(REGULAR) A2(REGULAR) A3(REGULAR) A4(REGULAR) B1(REGULAR) B2(REGULAR) B3(REGULAR) B4(REGULAR) C1(PREMIUM) C2(PREMIUM) C3(PREMIUM) C4(PREMIUM) D1(PREMIUM) D2(PREMIUM) D3(PREMIUM) D4(PREMIUM) E1(RECLINER) E2(RECLINER) E3(RECLINER) E4(RECLINER)
+> CANCEL BK1
+ERROR BookingNotFoundException: No confirmed booking found with id BK1
+> CANCEL BK999
+ERROR BookingNotFoundException: No confirmed booking found with id BK999
+> BOOK SH999 U1 Alice alice@test.com A1
+ERROR ShowNotFoundException: No such show: SH999
+> BOOK SH1 U4 Dan dan@test.com A1
+OK booked [A1] -> booking BK3 total $250.0
