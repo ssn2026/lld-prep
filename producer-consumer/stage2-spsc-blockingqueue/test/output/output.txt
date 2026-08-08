@@ -1,0 +1,5 @@
+ArrayBlockingQueue capacity: 5, items: 30
+Count check (no item lost or duplicated): PASS
+Exact-order check: PASS
+Elapsed: 3ms
+OVERALL: PASS
