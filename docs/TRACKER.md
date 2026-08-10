@@ -49,7 +49,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [x] Movie Booking System `[learning-mode]`
 - [ ] Flight Booking System
 - [ ] Cart (Amazon-style)
-- [ ] Ecommerce / Inventory Management (Amazon/Zepto-style)
+- [x] Ecommerce / Inventory Management (Amazon/Zepto-style) `[learning-mode]`
 - [ ] YouTube Playlist System
 - [ ] Delivery Service
 
