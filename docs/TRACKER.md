@@ -64,7 +64,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [ ] Job Scheduler
 - [ ] Priority-Based CPU Job Scheduling Algorithm
 - [ ] InMemory Task Scheduler (run task at scheduled time)
-- [ ] Calendar
+- [x] Calendar `[learning-mode]`
 - [ ] Adaptive Alert Monitoring System
 - [ ] Notification System
 - [ ] Logger Service / Logger Library
