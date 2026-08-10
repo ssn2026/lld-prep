@@ -58,7 +58,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [ ] Stock-Subscription System
 - [ ] Multi-threaded Concurrent Stock Exchange App
 - [ ] Stock Broker System
-- [ ] ATM
+- [x] ATM `[learning-mode]`
 
 ### Scheduling / Infra / Systems
 - [ ] Job Scheduler
