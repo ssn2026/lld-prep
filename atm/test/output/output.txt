@@ -1,0 +1,76 @@
+> ACCOUNT ACC001 1234 5000
+OK account ACC001 registered, balance=5000
+> ACCOUNT ACC002 5678 2000
+OK account ACC002 registered, balance=2000
+> CASH 2000 5
+OK loaded 5x 2000 notes
+> CASH 500 10
+OK loaded 10x 500 notes
+> CASH 200 10
+OK loaded 10x 200 notes
+> CASH 100 20
+OK loaded 20x 100 notes
+> STATUS
+STATUS -> IDLE
+> INSERT ACC001
+OK card inserted for ACC001
+> PIN 9999
+ERROR InvalidPinException: Incorrect PIN (attempt 1/3)
+> PIN 1234
+OK PIN accepted, session authenticated
+> STATUS
+STATUS -> AUTHENTICATED
+> BALANCE
+BALANCE 5000
+> WITHDRAW 3800
+OK withdrew 3800 -> balance=1200 dispensed={1x2000 3x500 1x200 1x100}
+> STATEMENT
+STATEMENT
+  WITHDRAWAL 3800 -> balance=1200 {1x2000 3x500 1x200 1x100}
+> DEPOSIT 500
+OK deposited 500 -> balance=1700
+> STATEMENT
+STATEMENT
+  WITHDRAWAL 3800 -> balance=1200 {1x2000 3x500 1x200 1x100}
+  DEPOSIT 500 -> balance=1700
+> EJECT
+OK card ejected
+> STATUS
+STATUS -> IDLE
+> INSERT ACC002
+OK card inserted for ACC002
+> PIN 0000
+ERROR InvalidPinException: Incorrect PIN (attempt 1/3)
+> PIN 1111
+ERROR InvalidPinException: Incorrect PIN (attempt 2/3)
+> PIN 2222
+ERROR InvalidPinException: Incorrect PIN entered 3 times; card retained
+> STATUS
+STATUS -> CARD_RETAINED
+> INSERT ACC001
+ERROR IllegalAtmOperationException: Requires an idle machine; currently CARD_RETAINED
+> RESET
+OK machine reset to idle
+> STATUS
+STATUS -> IDLE
+> INSERT ACC002
+OK card inserted for ACC002
+> PIN 5678
+OK PIN accepted, session authenticated
+> WITHDRAW 100000
+ERROR InsufficientFundsException: Insufficient balance: requested 100000, available 2000
+> WITHDRAW 150
+ERROR InsufficientCashException: Cannot dispense exact amount; no smaller denomination available for the remaining 50
+> WITHDRAW 1900
+OK withdrew 1900 -> balance=100 dispensed={3x500 2x200}
+> STATEMENT
+STATEMENT
+  WITHDRAWAL 1900 -> balance=100 {3x500 2x200}
+> EJECT
+OK card ejected
+> BALANCE
+ERROR IllegalAtmOperationException: Requires an authenticated session; currently IDLE
+> WITHDRAW 100
+ERROR IllegalAtmOperationException: Requires an authenticated session; currently IDLE
+> INSERT GHOST999
+ERROR AccountNotFoundException: No account with number GHOST999

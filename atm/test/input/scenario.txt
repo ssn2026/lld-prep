@@ -1,0 +1,57 @@
+# Setup: two accounts, cash loaded across 4 denominations (order doesn't
+# matter -- CashDispenser sorts descending before building the chain)
+ACCOUNT ACC001 1234 5000
+ACCOUNT ACC002 5678 2000
+CASH 2000 5
+CASH 500 10
+CASH 200 10
+CASH 100 20
+STATUS
+
+# Happy path: insert, wrong PIN once (attempt 1/3), correct PIN, check
+# balance, withdraw (exercises the denomination Chain of Responsibility),
+# statement, deposit, statement again, eject
+INSERT ACC001
+PIN 9999
+PIN 1234
+STATUS
+BALANCE
+WITHDRAW 3800
+STATEMENT
+DEPOSIT 500
+STATEMENT
+EJECT
+STATUS
+
+# Edge case: 3 consecutive wrong PINs retains the card (State pattern:
+# CardInsertedState.retainCard() -> CardRetainedState, a terminal state)
+INSERT ACC002
+PIN 0000
+PIN 1111
+PIN 2222
+STATUS
+
+# Edge case: machine isn't idle (card retained) -- insertCard() rejected by
+# requireIdle() before it even checks the account
+INSERT ACC001
+
+# Admin recovery: RESET is an override, not a state transition
+RESET
+STATUS
+
+# ACC002 session: insufficient funds (fails before touching the dispenser),
+# then insufficient cash for exact change (fails the CoR chain, but plan()
+# never mutated inventory so the retry below still works), then a
+# successful withdrawal
+INSERT ACC002
+PIN 5678
+WITHDRAW 100000
+WITHDRAW 150
+WITHDRAW 1900
+STATEMENT
+EJECT
+
+# Edge cases: no card inserted, unknown account
+BALANCE
+WITHDRAW 100
+INSERT GHOST999
