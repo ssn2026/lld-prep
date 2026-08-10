@@ -1,0 +1,79 @@
+> USER alice Alice
+OK user alice (Alice) registered
+> USER bob Bob
+OK user bob (Bob) registered
+> USER carol Carol
+OK user carol (Carol) registered
+> EVENT alice Standup 2026-08-10T09:00 2026-08-10T09:30 bob,carol DAILY 3
+OK created 3 occurrence(s): E1 E2 E3
+> VIEW alice alice 2026-08-10T00:00 2026-08-13T00:00
+VIEW alice (as seen by alice)
+  E1 Standup [2026-08-10T09:00 - 2026-08-10T09:30] series=SERIES1
+  E2 Standup [2026-08-11T09:00 - 2026-08-11T09:30] series=SERIES1
+  E3 Standup [2026-08-12T09:00 - 2026-08-12T09:30] series=SERIES1
+> VIEW carol bob 2026-08-10T00:00 2026-08-13T00:00
+VIEW bob (as seen by carol)
+  E1 Standup [2026-08-10T09:00 - 2026-08-10T09:30] series=SERIES1
+  E2 Standup [2026-08-11T09:00 - 2026-08-11T09:30] series=SERIES1
+  E3 Standup [2026-08-12T09:00 - 2026-08-12T09:30] series=SERIES1
+> USER dave Dave
+OK user dave (Dave) registered
+> VIEW dave alice 2026-08-10T00:00 2026-08-13T00:00
+VIEW alice (as seen by dave)
+  E1 Busy [2026-08-10T09:00 - 2026-08-10T09:30] series=SERIES1
+  E2 Busy [2026-08-11T09:00 - 2026-08-11T09:30] series=SERIES1
+  E3 Busy [2026-08-12T09:00 - 2026-08-12T09:30] series=SERIES1
+> EVENT bob Weekly_1_on_1 2026-08-14T14:00 2026-08-14T14:30 alice WEEKLY 2
+OK created 2 occurrence(s): E4 E5
+> EVENT carol Rent_Reminder 2026-08-01T08:00 2026-08-01T08:15 NONE MONTHLY 2
+OK created 2 occurrence(s): E6 E7
+> EVENT bob Lunch 2026-08-11T09:15 2026-08-11T09:45 NONE NONE 1
+ERROR EventConflictException: Event conflicts with an existing event on bob's calendar at 2026-08-11T09:15
+> EVENT bob Lunch 2026-08-11T12:00 2026-08-11T13:00 NONE NONE 1
+OK created 1 occurrence(s): E8
+> EVENT alice Marathon 2026-09-01T09:00 2026-09-02T19:00 NONE DAILY 2
+ERROR InvalidEventException: Recurring occurrences overlap each other (duration exceeds recurrence interval)
+> CANCEL E2
+OK cancelled event E2
+> VIEW alice alice 2026-08-10T00:00 2026-08-13T00:00
+VIEW alice (as seen by alice)
+  E1 Standup [2026-08-10T09:00 - 2026-08-10T09:30] series=SERIES1
+  E3 Standup [2026-08-12T09:00 - 2026-08-12T09:30] series=SERIES1
+> CANCELSERIES SERIES1
+OK cancelled series SERIES1
+> VIEW alice alice 2026-08-10T00:00 2026-08-13T00:00
+VIEW alice (as seen by alice)
+  (no events)
+> GROUP TeamCal
+OK group TeamCal created
+> GROUPADD TeamCal alice
+OK added alice to group TeamCal
+> GROUPADD TeamCal bob
+OK added bob to group TeamCal
+> GROUPVIEW TeamCal 2026-08-11T00:00 2026-08-13T00:00
+GROUPVIEW TeamCal
+  E8 Lunch [2026-08-11T12:00 - 2026-08-11T13:00]
+> GROUP Org
+OK group Org created
+> GROUPADD Org TeamCal
+OK added TeamCal to group Org
+> GROUPADD Org carol
+OK added carol to group Org
+> GROUPVIEW Org 2026-08-01T00:00 2026-09-01T00:00
+GROUPVIEW Org
+  E6 Rent Reminder [2026-08-01T08:00 - 2026-08-01T08:15] series=SERIES3
+  E8 Lunch [2026-08-11T12:00 - 2026-08-11T13:00]
+  E4 Weekly 1 on 1 [2026-08-14T14:00 - 2026-08-14T14:30] series=SERIES2
+  E5 Weekly 1 on 1 [2026-08-21T14:00 - 2026-08-21T14:30] series=SERIES2
+> EVENT alice Bad_Event 2026-08-10T10:00 2026-08-10T09:00 NONE NONE 1
+ERROR InvalidEventException: Event end must be after start
+> EVENT ghost Oops 2026-08-10T10:00 2026-08-10T11:00 NONE NONE 1
+ERROR UserNotFoundException: No user with id ghost
+> CANCEL E999
+ERROR EventNotFoundException: No event with id E999
+> VIEW alice ghost 2026-08-10T00:00 2026-08-13T00:00
+ERROR UserNotFoundException: No user (or calendar) with id ghost
+> GROUPVIEW Ghost 2026-08-10T00:00 2026-08-13T00:00
+ERROR CalendarGroupNotFoundException: No calendar group with id Ghost
+> GROUPADD TeamCal ghostuser
+ERROR UserNotFoundException: No user (or calendar) with id ghostuser

@@ -1,0 +1,58 @@
+# Setup
+USER alice Alice
+USER bob Bob
+USER carol Carol
+
+# Happy path: a 3-day recurring standup (Strategy: DailyRecurrenceStrategy),
+# alice owns it, bob and carol are attendees -- lands on all three calendars
+EVENT alice Standup 2026-08-10T09:00 2026-08-10T09:30 bob,carol DAILY 3
+
+# Owner view: full detail on all 3 occurrences
+VIEW alice alice 2026-08-10T00:00 2026-08-13T00:00
+
+# Attendee view: carol is invited, so she sees full detail on bob's calendar too
+VIEW carol bob 2026-08-10T00:00 2026-08-13T00:00
+
+# Non-attendee view: dave isn't invited, so the Proxy redacts details to "Busy"
+USER dave Dave
+VIEW dave alice 2026-08-10T00:00 2026-08-13T00:00
+
+# Weekly and monthly recurrence (Strategy family)
+EVENT bob Weekly_1_on_1 2026-08-14T14:00 2026-08-14T14:30 alice WEEKLY 2
+EVENT carol Rent_Reminder 2026-08-01T08:00 2026-08-01T08:15 NONE MONTHLY 2
+
+# Edge case: conflicts with bob's Aug-11 standup occurrence (09:15 falls inside 09:00-09:30)
+EVENT bob Lunch 2026-08-11T09:15 2026-08-11T09:45 NONE NONE 1
+
+# Non-conflicting event -- succeeds as a single (non-series) event
+EVENT bob Lunch 2026-08-11T12:00 2026-08-11T13:00 NONE NONE 1
+
+# Edge case: a recurring event whose own occurrences overlap each other
+# (34h duration, daily cadence -- occurrence 2 starts before occurrence 1 ends)
+EVENT alice Marathon 2026-09-01T09:00 2026-09-02T19:00 NONE DAILY 2
+
+# Cancel a single occurrence, then the rest of the series
+CANCEL E2
+VIEW alice alice 2026-08-10T00:00 2026-08-13T00:00
+CANCELSERIES SERIES1
+VIEW alice alice 2026-08-10T00:00 2026-08-13T00:00
+
+# Composite: a team group merging individual calendars, then a nested
+# "Org" group containing that team group plus a standalone user
+GROUP TeamCal
+GROUPADD TeamCal alice
+GROUPADD TeamCal bob
+GROUPVIEW TeamCal 2026-08-11T00:00 2026-08-13T00:00
+GROUP Org
+GROUPADD Org TeamCal
+GROUPADD Org carol
+GROUPVIEW Org 2026-08-01T00:00 2026-09-01T00:00
+
+# Edge cases: bad time range, unknown user, unknown event, unknown viewer
+# target, unknown group, unknown group member
+EVENT alice Bad_Event 2026-08-10T10:00 2026-08-10T09:00 NONE NONE 1
+EVENT ghost Oops 2026-08-10T10:00 2026-08-10T11:00 NONE NONE 1
+CANCEL E999
+VIEW alice ghost 2026-08-10T00:00 2026-08-13T00:00
+GROUPVIEW Ghost 2026-08-10T00:00 2026-08-13T00:00
+GROUPADD TeamCal ghostuser
