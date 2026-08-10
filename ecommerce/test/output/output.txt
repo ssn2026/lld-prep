@@ -1,0 +1,75 @@
+> PRODUCT LAPTOP001 Laptop_Pro 1200.00 5
+OK product LAPTOP001 (Laptop_Pro) added, price=$1200.0 stock=5
+> PRODUCT MOUSE001 Wireless_Mouse 25.00 50
+OK product MOUSE001 (Wireless_Mouse) added, price=$25.0 stock=50
+> PRODUCT KEYBOARD001 Mechanical_KB 75.00 20
+OK product KEYBOARD001 (Mechanical_KB) added, price=$75.0 stock=20
+> INVENTORY
+INVENTORY
+LAPTOP001 Laptop_Pro $1200.0 stock=5
+MOUSE001 Wireless_Mouse $25.0 stock=50
+KEYBOARD001 Mechanical_KB $75.0 stock=20
+> ADDCART alice LAPTOP001 1
+OK added 1x LAPTOP001 to alice's cart
+> ADDCART alice MOUSE001 2
+OK added 2x MOUSE001 to alice's cart
+> CART alice
+CART alice
+  1x LAPTOP001 (Laptop_Pro) @ $1200.0
+  2x MOUSE001 (Wireless_Mouse) @ $25.0
+> CHECKOUT alice 123_Main_St SAVE10 CARD
+OK checkout -> order O1 total=$1125.0 status=PLACED
+> INVENTORY
+INVENTORY
+LAPTOP001 Laptop_Pro $1200.0 stock=4
+MOUSE001 Wireless_Mouse $25.0 stock=48
+KEYBOARD001 Mechanical_KB $75.0 stock=20
+> STATUS O1
+STATUS O1 -> PLACED
+> CONFIRM O1
+OK order O1 confirmed
+> SHIP O1
+OK order O1 shipped
+> DELIVER O1
+OK order O1 delivered
+> STATUS O1
+STATUS O1 -> DELIVERED
+> CANCEL O1
+ERROR InvalidOrderStateException: Cannot cancel order in status DELIVERED
+> ADDCART bob KEYBOARD001 100
+OK added 100x KEYBOARD001 to bob's cart
+> CHECKOUT bob 456_Oak_Ave NONE CARD
+ERROR OutOfStockException: Insufficient stock for KEYBOARD001: requested 100, available 20
+> REMOVECART bob KEYBOARD001
+OK removed KEYBOARD001 from bob's cart
+> ADDCART bob KEYBOARD001 3
+OK added 3x KEYBOARD001 to bob's cart
+> CHECKOUT bob 456_Oak_Ave NONE INVALID_CARD
+ERROR PaymentDeclinedException: Payment authorization declined for method INVALID_CARD
+> INVENTORY
+INVENTORY
+LAPTOP001 Laptop_Pro $1200.0 stock=4
+MOUSE001 Wireless_Mouse $25.0 stock=48
+KEYBOARD001 Mechanical_KB $75.0 stock=20
+> CHECKOUT bob 456_Oak_Ave NONE CARD
+OK checkout -> order O2 total=$225.0 status=PLACED
+> INVENTORY
+INVENTORY
+LAPTOP001 Laptop_Pro $1200.0 stock=4
+MOUSE001 Wireless_Mouse $25.0 stock=48
+KEYBOARD001 Mechanical_KB $75.0 stock=17
+> CANCEL O2
+OK order O2 cancelled, stock restocked
+> INVENTORY
+INVENTORY
+LAPTOP001 Laptop_Pro $1200.0 stock=4
+MOUSE001 Wireless_Mouse $25.0 stock=48
+KEYBOARD001 Mechanical_KB $75.0 stock=20
+> ADDCART carol GHOST999 1
+ERROR ProductNotFoundException: No product with SKU GHOST999
+> CHECKOUT carol 789_Pine_Rd NONE CARD
+ERROR EmptyCartException: Cart is empty for customer carol
+> STATUS O99
+ERROR OrderNotFoundException: No order with id O99
+> SHIP O2
+ERROR InvalidOrderStateException: Cannot ship order in status CANCELLED

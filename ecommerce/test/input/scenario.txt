@@ -1,0 +1,47 @@
+# Catalog setup
+PRODUCT LAPTOP001 Laptop_Pro 1200.00 5
+PRODUCT MOUSE001 Wireless_Mouse 25.00 50
+PRODUCT KEYBOARD001 Mechanical_KB 75.00 20
+INVENTORY
+
+# Happy path: alice buys a laptop + 2 mice with a 10% coupon, order goes
+# all the way through the lifecycle to delivered
+ADDCART alice LAPTOP001 1
+ADDCART alice MOUSE001 2
+CART alice
+CHECKOUT alice 123_Main_St SAVE10 CARD
+INVENTORY
+STATUS O1
+CONFIRM O1
+SHIP O1
+DELIVER O1
+STATUS O1
+
+# Edge case: cannot cancel a delivered order (State pattern rejects it)
+CANCEL O1
+
+# Edge case: checkout fails stock check (Chain of Responsibility, first link)
+ADDCART bob KEYBOARD001 100
+CHECKOUT bob 456_Oak_Ave NONE CARD
+
+# Edge case: checkout fails payment authorization (Chain of Responsibility,
+# last link) -- stock must be untouched since the chain rejects before
+# EcommerceService.checkout() reserves anything
+REMOVECART bob KEYBOARD001
+ADDCART bob KEYBOARD001 3
+CHECKOUT bob 456_Oak_Ave NONE INVALID_CARD
+INVENTORY
+
+# bob retries with a valid card -> succeeds, then cancels while still
+# PLACED -> inventory is restocked
+CHECKOUT bob 456_Oak_Ave NONE CARD
+INVENTORY
+CANCEL O2
+INVENTORY
+
+# Edge cases: unknown product, empty cart, unknown order, illegal transition
+# on an already-cancelled order
+ADDCART carol GHOST999 1
+CHECKOUT carol 789_Pine_Rd NONE CARD
+STATUS O99
+SHIP O2
