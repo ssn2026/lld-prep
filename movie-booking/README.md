@@ -54,6 +54,9 @@ movie-booking/
   test/
     input/scenario.txt   Command script covering search, booking, pricing mix, cancel, and edge cases
     output/output.txt    Captured run transcript
+  explainer/index.html   Interactive step-through: pick a show and seats, tap "Next step" to watch
+                          the real bookSeats()/cancelBooking() call chain execute with live values
+                          (open directly in a browser)
 ```
 
 ## Running it
