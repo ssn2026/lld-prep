@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Blackjack — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1120px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1.15fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+
+  .card-panel { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 14px; min-height:18px; }
+
+  .section-label { font-size:10.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint); margin:14px 0 6px; }
+  .section-label:first-of-type { margin-top:0; }
+
+  .hand-row { background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .hand-row.active { border-color:var(--amber); background:var(--open-fill); }
+  .hand-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; }
+  .hand-name { font-size:13px; font-weight:800; }
+  .hand-total { font-size:18px; font-weight:800; }
+  .hand-status { font-size:9.5px; font-weight:800; padding:2px 8px; border-radius:999px; background:var(--surface-2); color:var(--ink-dim); }
+  .status-BLACKJACK { background:var(--open-fill); color:var(--open); }
+  .status-BUSTED { background:var(--taken-fill); color:var(--taken); }
+  .status-STANDING { background:var(--surface-2); color:var(--ink-dim); }
+  .cards-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .card-chip { padding:6px 9px; border-radius:6px; border:1.5px solid var(--line-strong); background:var(--paper); font-size:11.5px; font-weight:700; }
+  .card-chip.red { color:var(--taken); }
+
+  .result-banner { text-align:center; font-size:13px; font-weight:800; padding:6px 12px; border-radius:999px; margin-top:6px; display:inline-block; }
+  .result-WIN { background:var(--open-fill); color:var(--open); }
+  .result-LOSE { background:var(--taken-fill); color:var(--taken); }
+  .result-PUSH { background:var(--surface-2); color:var(--ink-dim); }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+
+  /* trace console */
+  .trace-card { max-height:720px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Blackjack · LLD-Prep</div>
+  <div class="layout">
+    <div class="card-panel" id="stage"></div>
+    <div class="card-panel trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Deal a round to start — every click below logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// A long enough fixed sequence to simulate several rounds without repeats mattering for the demo.
+var DECK = [
+  ['A','SPADES'], ['K','HEARTS'], ['10','CLUBS'], ['4','HEARTS'], ['3','HEARTS'],
+  ['9','DIAMONDS'], ['6','CLUBS'], ['2','SPADES'], ['7','HEARTS'], ['5','DIAMONDS'],
+  ['Q','CLUBS'], ['8','SPADES'], ['J','HEARTS'], ['6','DIAMONDS'], ['3','CLUBS'],
+  ['9','SPADES'], ['4','CLUBS'], ['K','DIAMONDS'], ['7','SPADES'], ['2','HEARTS']
+];
+var RED_SUITS = { HEARTS:1, DIAMONDS:1 };
+function cardValue(rank){ if (rank==='A') return 11; if (['K','Q','J'].indexOf(rank)>=0) return 10; return parseInt(rank,10); }
+
+var state = { deckIndex:0, player:null, dealer:null };
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+// ---------- hand helpers ----------
+function freshHand(){ return { cards:[], status:'ACTIVE' }; }
+function drawCard(){ var c = DECK[state.deckIndex % DECK.length]; state.deckIndex++; return c; }
+function addCard(hand, card){ hand.cards.push(card); }
+function total(hand){
+  var t=0, aces=0;
+  hand.cards.forEach(function(c){ t+=cardValue(c[0]); if (c[0]==='A') aces++; });
+  while (t>21 && aces>0){ t-=10; aces--; }
+  return t;
+}
+function settleInitial(hand){ hand.status = total(hand)===21 ? 'BLACKJACK' : 'ACTIVE'; }
+
+// ---------- render fragments ----------
+function cardChipHTML(c){
+  var cls = 'card-chip'+(RED_SUITS[c[1]]?' red':'');
+  return '<span class="'+cls+'">'+c[0]+esc(suitGlyph(c[1]))+'</span>';
+}
+function suitGlyph(s){ return s==='HEARTS'?'♥':s==='DIAMONDS'?'♦':s==='CLUBS'?'♣':'♠'; }
+function handRowHTML(name, hand, isCurrent){
+  if (!hand) return '';
+  return '<div class="hand-row'+(isCurrent?' active':'')+'">'+
+    '<div class="hand-head"><span class="hand-name">'+esc(name)+'</span>'+
+    '<span class="hand-status status-'+hand.status+'">'+hand.status+'</span></div>'+
+    '<div class="cards-row">'+hand.cards.map(cardChipHTML).join('')+'</div>'+
+    '<div class="hand-total mono">'+total(hand)+'</div></div>';
+}
+function renderTableHTML(){
+  return '<div class="section-label">Table</div>'+
+    handRowHTML('Dealer', state.dealer, false)+
+    handRowHTML('You', state.player, state.player && state.player.status==='ACTIVE');
+}
+
+// ---------- screens ----------
+function screenDeal(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>New round</h1><p class="stage-cap">One player vs the dealer.</p>'+
+    '<div class="actions"><button class="cta" id="deal">Deal →</button></div>';
+  document.getElementById('deal').addEventListener('click', function(){
+    logDivider('— New round —');
+    screenDealSteps();
+  });
+}
+
+function buildDealSteps(){
+  return [
+    { code:'Deck deck = DeckFactory.createShuffledDeck();', detail:'fixed seed -> same order every run' },
+    { code:'player.getHand().addCard(deck.draw()); (x2)', detail:'2 cards dealt to the player',
+      effect:function(){ state.player=freshHand(); addCard(state.player, drawCard()); addCard(state.player, drawCard()); } },
+    { code:'dealer.getHand().addCard(deck.draw()); (x2)', detail:'2 cards dealt to the dealer',
+      effect:function(){ state.dealer=freshHand(); addCard(state.dealer, drawCard()); addCard(state.dealer, drawCard()); } },
+    { code:'hand.settleInitialState();  // both hands', detail:'total==21 with 2 cards -> BLACKJACK, else ACTIVE',
+      effect:function(){ settleInitial(state.player); settleInitial(state.dealer); } }
+  ];
+}
+
+function screenDealSteps(){
+  var steps=buildDealSteps(), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>startRound(...)</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderTableHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenTable, 200); } else { render(); }
+    });
+  }
+}
+
+function buildHitSteps(){
+  var hand = state.player;
+  var steps = [];
+  steps.push({ code:'hand.getState().requireActive();', detail:'ActiveState -> no-op, legal' });
+  steps.push({ code:'Card card = deck.draw();', detail:'next card off the deck' });
+  var card;
+  steps.push({ code:'hand.setState(hand.getState().hit(hand, card));',
+    detail:'ActiveState.hit(): addCard, then Busted if total>21 else stays Active',
+    effect:function(){
+      card = drawCard();
+      addCard(hand, card);
+      hand.status = total(hand) > 21 ? 'BUSTED' : 'ACTIVE';
+    } });
+  return steps;
+}
+
+function screenHitSteps(){
+  logDivider('— hit() —');
+  var steps=buildHitSteps(), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>hit("You")</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderTableHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenTable, 200); } else { render(); }
+    });
+  }
+}
+
+function screenStandSteps(){
+  logDivider('— stand() —');
+  var steps=[
+    { code:'hand.setState(hand.getState().stand(hand));', detail:'ActiveState.stand() -> StandingState.INSTANCE',
+      effect:function(){ state.player.status='STANDING'; } }
+  ];
+  var idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>stand("You")</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderTableHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenTable, 200); } else { render(); }
+    });
+  }
+}
+
+function buildDealerSteps(){
+  var hand = state.dealer, steps=[];
+  steps.push({ code:'requireAllPlayersDone();', detail:'"You" is no longer ACTIVE -> proceeds' });
+  if (hand.status !== 'ACTIVE'){
+    steps.push({ code:'dealerHand.getState().getStatus() == ACTIVE?', detail:'false ('+hand.status+' already, e.g. a natural blackjack) -> loop body never runs' });
+    return steps;
+  }
+  var guard = 0;
+  while (hand.status==='ACTIVE' && total(hand) < 17 && guard < 6){
+    guard++;
+    steps.push({ code:'while (dealerHand ACTIVE && strategy.shouldHit(dealerHand)) { ... }',
+      detail:'total='+total(hand)+' < 17 -> hit',
+      effect:(function(){
+        return function(){
+          var card = drawCard();
+          addCard(hand, card);
+          hand.status = total(hand) > 21 ? 'BUSTED' : 'ACTIVE';
+        };
+      })() });
+  }
+  if (hand.status==='ACTIVE'){
+    steps.push({ code:'dealerHand.setState(state.stand(dealerHand));', detail:'total='+total(hand)+' >= 17 -> stand',
+      effect:function(){ hand.status='STANDING'; } });
+  }
+  return steps;
+}
+
+function screenDealerSteps(){
+  logDivider('— playDealerTurn() —');
+  var steps=buildDealerSteps(), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>playDealerTurn()</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderTableHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenResultSteps, 200); } else { render(); }
+    });
+  }
+}
+
+function computeOutcome(){
+  var p=state.player.status, d=state.dealer.status;
+  if (p==='BUSTED') return 'LOSE';
+  if (d==='BUSTED') return 'WIN';
+  if (p==='BLACKJACK' && d==='BLACKJACK') return 'PUSH';
+  if (p==='BLACKJACK') return 'WIN';
+  if (d==='BLACKJACK') return 'LOSE';
+  var pt=total(state.player), dt=total(state.dealer);
+  if (pt>dt) return 'WIN';
+  if (pt<dt) return 'LOSE';
+  return 'PUSH';
+}
+
+function screenResultSteps(){
+  logDivider('— getRoundResult() —');
+  var outcome;
+  var steps = [
+    { code:'requireAllPlayersDone(); dealerHand not ACTIVE -> proceed', detail:'both hands settled' },
+    { code:'outcome(playerHand, dealerHand)', detail:'checks bust -> blackjack -> total compare, in that order',
+      effect:function(){ outcome = computeOutcome(); } }
+  ];
+  var idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>getRoundResult()</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderTableHTML()+
+      (outcome ? '<div style="text-align:center"><span class="result-banner result-'+outcome+'">'+outcome+'</span></div>' : '')+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenTable, 200); } else { render(); }
+    });
+  }
+}
+
+function screenTable(){
+  var el=document.getElementById('stage');
+  var body = '<h1>Table</h1><p class="stage-cap">BlackjackService, live.</p>'+renderTableHTML()+'<div class="actions">';
+  if (state.player.status==='ACTIVE'){
+    body += '<button class="cta" id="hit">Hit →</button><button class="cta ghost" id="stand">Stand →</button>';
+  } else if (state.dealer.status==='ACTIVE'){
+    body += '<button class="cta" id="dealer">Play dealer’s turn →</button>';
+  } else {
+    body += '<button class="cta" id="result">See result →</button>';
+  }
+  body += '<button class="cta ghost" id="reset">New round ↻</button></div>';
+  el.innerHTML = body;
+
+  var hitBtn=document.getElementById('hit'), standBtn=document.getElementById('stand');
+  var dealerBtn=document.getElementById('dealer'), resultBtn=document.getElementById('result');
+  if (hitBtn) hitBtn.addEventListener('click', screenHitSteps);
+  if (standBtn) standBtn.addEventListener('click', screenStandSteps);
+  if (dealerBtn) dealerBtn.addEventListener('click', screenDealerSteps);
+  if (resultBtn) resultBtn.addEventListener('click', screenResultSteps);
+  document.getElementById('reset').addEventListener('click', function(){
+    state = { deckIndex:0, player:null, dealer:null };
+    document.getElementById('trace-log').innerHTML='<div class="trace-empty">Deal a round to start — every click below logs the real method call it triggers.</div>';
+    screenDeal();
+  });
+}
+
+screenDeal();
+})();
+</script>
+</body>
+</html>

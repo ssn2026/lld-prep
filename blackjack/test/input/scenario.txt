@@ -1,0 +1,26 @@
+# Blackjack demo script
+# Deck is shuffled with a fixed seed (DeckFactory.DEFAULT_SEED), so this
+# exact deal is reproducible on every run.
+
+ROUND Alice,Bob
+HANDS
+
+# --- error: dealer plays before everyone is done ---
+DEALER
+
+HIT Bob
+
+# --- error: unknown player ---
+HIT Ghost
+
+# --- error: asking for the result before the dealer has played ---
+RESULT
+
+STAND Bob
+
+# --- error: Alice was dealt a natural blackjack -- already terminal ---
+HIT Alice
+
+DEALER
+RESULT
+HANDS

@@ -1,0 +1,31 @@
+> ROUND Alice,Bob
+OK round started for [Alice, Bob]
+> HANDS
+HANDS
+  Dealer: [KING-HEARTS, ACE-CLUBS] = 21 (BLACKJACK)
+  Alice: [ACE-SPADES, JACK-SPADES] = 21 (BLACKJACK)
+  Bob: [TEN-CLUBS, FOUR-HEARTS] = 14 (ACTIVE)
+> DEALER
+ERROR RoundNotReadyException: Bob still has to hit or stand
+> HIT Bob
+OK Bob hits
+> HIT Ghost
+ERROR PlayerNotFoundException: No player found with name: Ghost
+> RESULT
+ERROR RoundNotReadyException: Bob still has to hit or stand
+> STAND Bob
+OK Bob stands
+> HIT Alice
+ERROR IllegalHandActionException: Cannot hit/stand on a hand that is BLACKJACK
+> DEALER
+OK dealer played
+> RESULT
+RESULT
+  Dealer: 21 (BLACKJACK)
+  Alice: 21 (BLACKJACK) -> PUSH
+  Bob: 17 (STANDING) -> LOSE
+> HANDS
+HANDS
+  Dealer: [KING-HEARTS, ACE-CLUBS] = 21 (BLACKJACK)
+  Alice: [ACE-SPADES, JACK-SPADES] = 21 (BLACKJACK)
+  Bob: [TEN-CLUBS, FOUR-HEARTS, THREE-HEARTS] = 17 (STANDING)

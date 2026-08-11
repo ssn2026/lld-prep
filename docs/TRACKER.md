@@ -43,7 +43,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [ ] Ludo
 
 ### Games — Card
-- [ ] Blackjack
+- [x] Blackjack `[learning-mode]`
 
 ### Booking / Commerce
 - [x] Movie Booking System `[learning-mode]`
