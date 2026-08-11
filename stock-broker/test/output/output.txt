@@ -1,0 +1,52 @@
+> ACCOUNT alice 100000
+OK account alice opened, cash=100000.0
+> ACCOUNT bob 50000
+OK account bob opened, cash=50000.0
+> PRICE AAPL 150.00
+OK price AAPL -> 150.0
+> ORDER alice BUY AAPL MARKET 10 NONE
+OK order O1 BUY 10 AAPL (MARKET) -> status=EXECUTED @150.0 charges=6.0
+> PORTFOLIO alice
+PORTFOLIO alice cash=98494.0 holdings={AAPL=10}
+> ORDER alice SELL AAPL LIMIT 5 160
+OK order O2 SELL 5 AAPL (LIMIT) -> status=PENDING
+> ORDER bob BUY AAPL LIMIT 20 140
+OK order O3 BUY 20 AAPL (LIMIT) -> status=PENDING
+> HISTORY alice
+HISTORY alice
+  O1 BUY 10 AAPL (MARKET) -> EXECUTED @150.0 charges=6.0
+  O2 SELL 5 AAPL (LIMIT) -> PENDING
+> PRICE AAPL 145.00
+OK price AAPL -> 145.0
+> PRICE AAPL 138.00
+OK price AAPL -> 138.0
+> PORTFOLIO bob
+PORTFOLIO bob cash=47228.96 holdings={AAPL=20}
+> PRICE AAPL 165.00
+OK price AAPL -> 165.0
+> PORTFOLIO alice
+PORTFOLIO alice cash=99315.7 holdings={AAPL=5}
+> HISTORY alice
+HISTORY alice
+  O1 BUY 10 AAPL (MARKET) -> EXECUTED @150.0 charges=6.0
+  O2 SELL 5 AAPL (LIMIT) -> EXECUTED @165.0 charges=3.3000000000000003
+> ORDER alice SELL AAPL MARKET 100 NONE
+ERROR InsufficientHoldingsException: Insufficient holdings of AAPL: requested 100, held 5
+> ORDER alice BUY GOOG MARKET 5 NONE
+ERROR NoQuoteAvailableException: No market price available for GOOG
+> ORDER alice BUY AAPL LIMIT 5 NONE
+ERROR InvalidOrderException: Limit orders require a limit price
+> ORDER alice BUY AAPL MARKET -5 NONE
+ERROR InvalidOrderException: Quantity must be positive
+> ORDER bob SELL AAPL LIMIT 5 200
+OK order O6 SELL 5 AAPL (LIMIT) -> status=PENDING
+> CANCEL O6
+OK cancelled order O6
+> CANCEL O6
+ERROR IllegalOrderStateException: Cannot cancel order in status CANCELLED
+> ORDER ghost BUY AAPL MARKET 1 NONE
+ERROR AccountNotFoundException: No account with id ghost
+> CANCEL O4
+ERROR OrderNotFoundException: No order with id O4
+> ORDER bob BUY AAPL MARKET 100000 NONE
+ERROR InsufficientFundsException: Insufficient funds: need 1.6566E7, available 47228.96

@@ -1,0 +1,48 @@
+# Setup
+ACCOUNT alice 100000
+ACCOUNT bob 50000
+PRICE AAPL 150.00
+
+# Happy path: market order executes immediately, charges = brokerage(0.25%)
+# + STT(0.1%) + GST(0.05%) = 0.4% of trade value
+ORDER alice BUY AAPL MARKET 10 NONE
+PORTFOLIO alice
+
+# Limit orders placed when not yet executable -- both stay PENDING
+ORDER alice SELL AAPL LIMIT 5 160
+ORDER bob BUY AAPL LIMIT 20 140
+HISTORY alice
+
+# Price moves but neither limit condition is met yet
+PRICE AAPL 145.00
+
+# Price drops to bob's buy-limit -> his order executes (Strategy: LimitOrderStrategy)
+PRICE AAPL 138.00
+PORTFOLIO bob
+
+# Price rises to alice's sell-limit -> her pending order executes
+PRICE AAPL 165.00
+PORTFOLIO alice
+HISTORY alice
+
+# Edge cases: insufficient holdings, no quote for an unknown symbol,
+# missing limit price, non-positive quantity
+ORDER alice SELL AAPL MARKET 100 NONE
+ORDER alice BUY GOOG MARKET 5 NONE
+ORDER alice BUY AAPL LIMIT 5 NONE
+ORDER alice BUY AAPL MARKET -5 NONE
+
+# Cancel a pending order, then try to cancel it again. Note this order
+# lands as O6, not O4 -- the two rejected attempts above (insufficient
+# holdings, no quote) each consumed an order id when placeOrder()
+# constructed the Order before attempting execution, even though neither
+# was ever saved. O4/O5 therefore never existed at all.
+ORDER bob SELL AAPL LIMIT 5 200
+CANCEL O6
+CANCEL O6
+
+# Edge cases: unknown account, an id that was consumed but never saved
+# (proves a rejected order truly never existed), insufficient funds
+ORDER ghost BUY AAPL MARKET 1 NONE
+CANCEL O4
+ORDER bob BUY AAPL MARKET 100000 NONE
