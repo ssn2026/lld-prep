@@ -1,0 +1,43 @@
+# CrickInfo demo script
+
+# --- error: recording a ball before the match has even started ---
+BALL RUN 1
+
+# --- error: starting a match before both teams are set ---
+MATCH 2
+
+TEAM A India Rohit,Gill,Kohli,Pant,Hardik,Jadeja,Ashwin,Bumrah,Shami,Siraj,Kuldeep
+TEAM B Australia Warner,Finch,Smith,Labuschagne,Marsh,Maxwell,Carey,Cummins,Starc,Hazlewood,Zampa
+MATCH 2
+
+# --- error: second innings before the first one is even over ---
+NEXTINNINGS
+
+# --- innings 1: India bat, 2 overs (12 legal balls) ---
+BALL RUN 4
+BALL RUN 1
+BALL WICKET
+BALL RUN 2
+BALL WIDE
+BALL RUN 0
+BALL RUN 6
+BALL NOBALL
+BALL RUN 1
+BALL RUN 4
+BALL WICKET
+BALL RUN 2
+BALL RUN 1
+BALL RUN 0
+SCORECARD
+
+NEXTINNINGS
+
+# --- innings 2: Australia chase 24 -- reached mid-over, before overs run out ---
+BALL RUN 6
+BALL RUN 6
+BALL RUN 6
+BALL RUN 6
+SCORECARD
+
+# --- error: match already completed ---
+BALL RUN 1

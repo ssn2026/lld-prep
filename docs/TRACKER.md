@@ -73,4 +73,4 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 
 ### Misc
 - [x] TODO List `[learning-mode]`
-- [ ] CrickInfo
+- [x] CrickInfo `[learning-mode]`

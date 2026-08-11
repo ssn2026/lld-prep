@@ -1,0 +1,62 @@
+> BALL RUN 1
+ERROR MatchNotInProgressException: Cannot record a ball while match status is NOT_STARTED
+> MATCH 2
+ERROR IllegalMatchOperationException: Cannot start a match before both teams are set
+> TEAM A India Rohit,Gill,Kohli,Pant,Hardik,Jadeja,Ashwin,Bumrah,Shami,Siraj,Kuldeep
+OK team A = India (11 players)
+> TEAM B Australia Warner,Finch,Smith,Labuschagne,Marsh,Maxwell,Carey,Cummins,Starc,Hazlewood,Zampa
+OK team B = Australia (11 players)
+> MATCH 2
+OK match started, 2 overs a side
+> NEXTINNINGS
+ERROR IllegalMatchOperationException: Cannot start the second innings from status INNINGS_1
+> BALL RUN 4
+OK ball recorded: RUN 4
+> BALL RUN 1
+OK ball recorded: RUN 1
+> BALL WICKET
+OK ball recorded: WICKET
+> BALL RUN 2
+OK ball recorded: RUN 2
+> BALL WIDE
+OK ball recorded: WIDE
+> BALL RUN 0
+OK ball recorded: RUN 0
+> BALL RUN 6
+OK ball recorded: RUN 6
+> BALL NOBALL
+OK ball recorded: NOBALL
+> BALL RUN 1
+OK ball recorded: RUN 1
+> BALL RUN 4
+OK ball recorded: RUN 4
+> BALL WICKET
+OK ball recorded: WICKET
+> BALL RUN 2
+OK ball recorded: RUN 2
+> BALL RUN 1
+OK ball recorded: RUN 1
+> BALL RUN 0
+OK ball recorded: RUN 0
+> SCORECARD
+SCORECARD
+  Status: INNINGS_BREAK
+  India: 23/2 (2.0 overs)
+> NEXTINNINGS
+OK second innings started
+> BALL RUN 6
+OK ball recorded: RUN 6
+> BALL RUN 6
+OK ball recorded: RUN 6
+> BALL RUN 6
+OK ball recorded: RUN 6
+> BALL RUN 6
+OK ball recorded: RUN 6
+> SCORECARD
+SCORECARD
+  Status: COMPLETED
+  India: 23/2 (2.0 overs)
+  Australia: 24/0 (0.4 overs)
+  Result: Australia won by 10 wicket(s)
+> BALL RUN 1
+ERROR MatchNotInProgressException: Cannot record a ball while match status is COMPLETED

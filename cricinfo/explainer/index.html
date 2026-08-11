@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CrickInfo — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1120px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1.15fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 14px; min-height:18px; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 10px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; text-align:center; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); }
+
+  .section-label { font-size:10.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint); margin:14px 0 6px; }
+  .section-label:first-of-type { margin-top:0; }
+
+  .scoreboard { display:flex; flex-direction:column; gap:8px; }
+  .sb-row { display:flex; justify-content:space-between; align-items:baseline; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; padding:10px 14px; }
+  .sb-row.current { border-color:var(--amber); background:var(--open-fill); }
+  .sb-team { font-size:13px; font-weight:800; }
+  .sb-score { font-size:20px; font-weight:800; }
+  .sb-overs { font-size:11px; color:var(--ink-dim); }
+  .phase-pill { display:inline-block; font-size:10.5px; font-weight:800; padding:3px 10px; border-radius:999px; background:var(--surface-2); color:var(--ink-dim); margin-bottom:10px; }
+  .result-banner { text-align:center; font-size:15px; font-weight:800; color:var(--open); background:var(--open-fill); border:1.5px solid var(--open); border-radius:10px; padding:12px; margin:10px 0; }
+
+  .ball-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .ball-btn { padding:8px 14px; border-radius:999px; border:1.5px solid var(--line-strong); background:var(--paper); font-size:12px; font-weight:700; cursor:pointer; color:var(--ink-dim); }
+  .ball-btn:hover { border-color:var(--amber); color:var(--ink); }
+  .ball-btn.wicket { border-color:var(--taken); color:var(--taken); }
+  .ball-btn.extra { border-color:var(--ink-faint); }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+
+  /* trace console */
+  .trace-card { max-height:720px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">CrickInfo · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Start a match to begin — every click below logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var TEAM_A = 'India', TEAM_B = 'Australia';
+var PLAYERS = 11;
+
+var state = {
+  overs: 2,
+  phase: 'NOT_STARTED',
+  innings1: null,
+  innings2: null,
+  result: null
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+// ---------- innings helpers ----------
+function freshInnings(battingName, target){
+  return { battingName:battingName, runs:0, wickets:0, legalBalls:0, completedOvers:0, target: target || null };
+}
+function oversDisplay(inn){ return inn.completedOvers+'.'+inn.legalBalls; }
+function isAllOut(inn){ return inn.wickets >= PLAYERS-1; }
+function isOversComplete(inn){ return inn.completedOvers >= state.overs; }
+function hasReachedTarget(inn){ return inn.target != null && inn.runs > inn.target; }
+function currentInnings(){ return state.phase==='INNINGS_1' ? state.innings1 : state.innings2; }
+
+// ---------- render fragments ----------
+function scoreRowHTML(inn, isCurrent){
+  if (!inn) return '';
+  return '<div class="sb-row'+(isCurrent?' current':'')+'"><div><div class="sb-team">'+esc(inn.battingName)+'</div>'+
+    '<div class="sb-overs">'+oversDisplay(inn)+' / '+state.overs+' overs'+(inn.target!=null?' · target '+(inn.target+1):'')+'</div></div>'+
+    '<div class="sb-score mono">'+inn.runs+'/'+inn.wickets+'</div></div>';
+}
+function renderScoreboardHTML(){
+  var pill = '<span class="phase-pill">'+state.phase.replace('_',' ')+'</span>';
+  var rows = scoreRowHTML(state.innings1, state.phase==='INNINGS_1') + scoreRowHTML(state.innings2, state.phase==='INNINGS_2');
+  var banner = state.result ? '<div class="result-banner">'+esc(state.result)+'</div>' : '';
+  return '<div class="scoreboard">'+pill+'<br>'+rows+'</div>'+banner;
+}
+
+// ---------- screens ----------
+function screenSetup(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Start a match</h1><p class="stage-cap">'+TEAM_A+' vs '+TEAM_B+', 11 players a side.</p>'+
+    '<div class="choice-row">'+
+    [[2,'Quick match','2 overs a side'],[3,'Longer match','3 overs a side']].map(function(o){
+      return '<button class="choice-btn" data-o="'+o[0]+'"><span class="label">'+o[1]+'</span><span class="sub">'+o[2]+'</span></button>';
+    }).join('')+'</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-o]'), function(b){
+    b.addEventListener('click', function(){
+      state.overs = parseInt(b.getAttribute('data-o'), 10);
+      logDivider('— Starting match: '+TEAM_A+' vs '+TEAM_B+' —');
+      screenStartSteps();
+    });
+  });
+}
+
+function buildStartSteps(){
+  return [
+    { code:'service.setTeams("'+TEAM_A+'", [...11 players], "'+TEAM_B+'", [...11 players]);',
+      detail:'two Team objects created' },
+    { code:'service.startMatch('+state.overs+');',
+      detail:'state = state.startFirstInnings()   // NotStartedState -> Innings1State',
+      effect:function(){ state.phase='INNINGS_1'; state.innings1=freshInnings(TEAM_A, null); } }
+  ];
+}
+
+function screenStartSteps(){
+  var steps=buildStartSteps(), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>startMatch(...)</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderScoreboardHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+var CMD_CLASS = { RUN:'RunsBallCommand', WICKET:'WicketBallCommand', WIDE:'WideBallCommand', NOBALL:'NoBallBallCommand' };
+
+function buildBallSteps(type, runs){
+  var inn = currentInnings();
+  var steps = [];
+  steps.push({ code:'state.requireInningsInProgress();', detail:'current phase = '+state.phase+' -> legal, proceeds' });
+  steps.push({ code:'BallCommand command = BallCommandFactory.create("'+type+'", '+runs+');',
+    detail:'factory returns a new '+CMD_CLASS[type]+'  (Command pattern)' });
+
+  var execDetail;
+  if (type==='RUN') execDetail = 'addRuns('+runs+'); '+(runs%2===1?'swapEnds() (odd runs); ':'')+'recordLegalBall()';
+  else if (type==='WICKET') execDetail = 'recordWicket()  // next batsman in; recordLegalBall()';
+  else execDetail = 'addRuns(1)  // extra, not a legal ball';
+
+  steps.push({ code:'command.execute(innings);', detail:execDetail, effect:function(){
+    if (type==='RUN'){ inn.runs+=runs; inn.legalBalls++; if (inn.legalBalls===6){ inn.completedOvers++; inn.legalBalls=0; } }
+    else if (type==='WICKET'){ inn.wickets++; inn.legalBalls++; if (inn.legalBalls===6){ inn.completedOvers++; inn.legalBalls=0; } }
+    else { inn.runs+=1; }
+  }});
+
+  if (type==='WICKET'){
+    steps.push({ code:'if (command instanceof WicketBallCommand) notifyWicketFallen(innings);',
+      detail:'ConsoleMatchListener: "WICKET! '+inn.battingName+' '+ (function(){return inn.wickets;})() +' down"  (Observer)' });
+  }
+
+  var ended = isAllOut(inn) || isOversComplete(inn) || hasReachedTarget(inn);
+  steps.push({ code:'innings.isAllOut() || innings.isOversComplete() || innings.hasReachedTarget()',
+    detail: ended ? 'TRUE -> this innings is over' : 'false -> innings continues' });
+
+  if (ended){
+    steps.push({ code:'notifyInningsComplete(innings);',
+      detail:inn.battingName+' '+inn.runs+'/'+inn.wickets+' ('+oversDisplay(inn)+' overs)  (Observer)' });
+    steps.push({ code:'state = state.endInnings();',
+      detail: state.phase==='INNINGS_1' ? 'Innings1State -> InningsBreakState' : 'Innings2State -> CompletedState',
+      effect:function(){ state.phase = state.phase==='INNINGS_1' ? 'INNINGS_BREAK' : 'COMPLETED'; } });
+    steps.push({ code:'if (state.getStatus() == COMPLETED) computeAndNotifyResult();',
+      detail: 'evaluated after the transition above',
+      effect:function(){
+        if (state.phase==='COMPLETED'){
+          var r1=state.innings1.runs, r2=state.innings2.runs;
+          if (r2>r1) state.result = TEAM_B+' won by '+((PLAYERS-1)-state.innings2.wickets)+' wicket(s)';
+          else if (r1>r2) state.result = TEAM_A+' won by '+(r1-r2)+' run(s)';
+          else state.result = 'Match tied';
+        }
+      } });
+  }
+  return steps;
+}
+
+function screenBallSteps(type, runs){
+  var steps=buildBallSteps(type, runs), idx=0;
+  logDivider('— BALL '+type+(type==='RUN'?' '+runs:'')+' —');
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>recordBall("'+type+'", '+runs+')</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderScoreboardHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function buildSecondInningsSteps(){
+  return [
+    { code:'state = state.startSecondInnings();', detail:'InningsBreakState -> Innings2State',
+      effect:function(){ state.phase='INNINGS_2'; } },
+    { code:'Innings innings2 = new Innings(teamB, teamA.getName(), oversLimit, innings1.getRuns());',
+      detail:'target to beat = '+state.innings1.runs,
+      effect:function(){ state.innings2 = freshInnings(TEAM_B, state.innings1.runs); } }
+  ];
+}
+
+function screenSecondInningsSteps(){
+  var steps=buildSecondInningsSteps(), idx=0;
+  logDivider('— Starting second innings —');
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>startSecondInnings()</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderScoreboardHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function screenControlRoom(){
+  var el=document.getElementById('stage');
+  var body = '<h1>Control room</h1><p class="stage-cap">CricInfoService, live.</p>'+renderScoreboardHTML();
+
+  if (state.phase==='INNINGS_1' || state.phase==='INNINGS_2'){
+    body += '<div class="section-label">Bowl a delivery</div>'+
+      '<div class="ball-row">'+
+      [0,1,2,4,6].map(function(r){ return '<button class="ball-btn" data-type="RUN" data-runs="'+r+'">'+r+' run'+(r===1?'':'s')+'</button>'; }).join('')+
+      '<button class="ball-btn wicket" data-type="WICKET" data-runs="0">Wicket</button>'+
+      '<button class="ball-btn extra" data-type="WIDE" data-runs="0">Wide</button>'+
+      '<button class="ball-btn extra" data-type="NOBALL" data-runs="0">No ball</button>'+
+      '</div>';
+  }
+  body += '<div class="actions">';
+  if (state.phase==='INNINGS_BREAK') body += '<button class="cta" id="next-innings">Start second innings →</button>';
+  body += '<button class="cta ghost" id="reset">Reset simulation ↻</button></div>';
+
+  el.innerHTML = body;
+  Array.prototype.forEach.call(el.querySelectorAll('[data-type]'), function(b){
+    b.addEventListener('click', function(){
+      screenBallSteps(b.getAttribute('data-type'), parseInt(b.getAttribute('data-runs'), 10));
+    });
+  });
+  var ni = document.getElementById('next-innings');
+  if (ni) ni.addEventListener('click', screenSecondInningsSteps);
+  document.getElementById('reset').addEventListener('click', function(){
+    state = { overs:2, phase:'NOT_STARTED', innings1:null, innings2:null, result:null };
+    document.getElementById('trace-log').innerHTML='<div class="trace-empty">Start a match to begin — every click below logs the real method call it triggers.</div>';
+    screenSetup();
+  });
+}
+
+screenSetup();
+})();
+</script>
+</body>
+</html>
