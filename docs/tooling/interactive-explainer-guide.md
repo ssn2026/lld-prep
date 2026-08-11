@@ -26,11 +26,51 @@ The winning formula: **real code, real values, one small reveal per
 click, user-paced, log persists so they can scroll back.** Nothing else
 mattered as much as getting that loop right.
 
+## Who builds it: inline vs. delegated (the biggest cost lever — read this before spawning anything)
+
+Five explainers were built via cold `general-purpose` subagents, each given
+this same guide, the reference file, and told to read the target problem's
+full `src/` tree from scratch. Measured cost: **127K-150K tokens per
+problem**, almost entirely spent on rediscovering a codebase the orchestrator
+either already knew or could have read once and reused.
+
+**Default: build it yourself, inline, in the same session where you just
+built (or are reviewing) that problem — no subagent.** If the problem's
+source is already in your context (you just wrote it, or you're mid-review),
+writing the explainer is just composing one ~300-400 line file from
+knowledge you already have. That's a fraction of the cost of a cold
+subagent re-deriving the same knowledge from zero.
+
+Only delegate to a subagent when the source is genuinely *not* in your
+context (e.g. batch-generating explainers for several already-finished
+problems in one sweep, as a separate task from building them). Even then,
+**batch multiple problems into ONE subagent call** rather than one agent
+per problem — the fixed cost (reading this guide + the reference file) is
+paid once per agent regardless of how many problems it builds, so 3
+problems in one agent is far cheaper than 3 agents doing 1 each.
+
+**Don't auto-publish to the Artifact tool by default.** The primary,
+committed deliverable is the local `explainer/index.html` file — every
+problem's README already says "open directly in a browser." Publishing
+requires loading the `artifact-design` skill and a full publish round-trip,
+which is real overhead for a link nobody asked for. Only publish (and only
+then load `artifact-design`) when the user explicitly wants a shareable
+`claude.ai` link.
+
+**Read exactly ONE reference file — `parking-lot/explainer/index.html`.**
+Skimming 2-3 other existing explainers "for extra calibration" was tried
+and is redundant: they all follow the same mechanics this doc already
+documents. One reference is enough to copy the `state`/`logStep`/
+`logDivider`/`screen*()` structure from.
+
 ## Token-efficient build process
 
 1. **Read the real source first** — every method body, field name, and
-   test-scenario value you'll show. Do this once, up front, in parallel
-   `Read` calls. No invented numbers (same rule as the `.drawio` diagrams).
+   test-scenario value you'll show. If you just built this problem in the
+   current session, you likely already have this — don't re-read files
+   you've already read this session just to "be sure." Otherwise, do this
+   once, up front, in parallel `Read` calls. No invented numbers (same rule
+   as the `.drawio` diagrams).
 2. **Skip the design-plan back-and-forth** — reuse the CSS token block
    below almost verbatim (concrete/paper palette, amber accent, system
    font stack). Only change: the accent hue and 2-3 domain nouns, if the
@@ -39,12 +79,14 @@ mattered as much as getting that loop right.
 3. **Write the whole file in ONE `Write` call.** Don't iterate with `Edit`
    after `Edit` — plan the full step sequence mentally first (see
    "Mapping code to steps" below), then write it once.
-4. **Publish once.** Don't loop Artifact-publish → screenshot → tweak →
-   republish. That loop is what burned the most tokens/turns in earlier
-   attempts (browser automation is also flaky against Claude's own
-   artifact-viewer chrome — clicks sometimes need a plain re-screenshot to
-   confirm state, see below). Publish, do a quick manual sanity read of
-   the code, hand it to the user, fix only what they flag.
+4. **Don't publish by default.** The local file is the deliverable (see
+   above). If the user does want a shareable link, publish once — don't
+   loop Artifact-publish → screenshot → tweak → republish. That loop is
+   what burned the most tokens/turns in earlier attempts (browser
+   automation is also flaky against Claude's own artifact-viewer chrome —
+   clicks sometimes need a plain re-screenshot to confirm state, see
+   below). Publish, do a quick manual sanity read of the code, hand it to
+   the user, fix only what they flag.
 5. **If you do need to verify in-browser**: `find`/`read_page` will match
    the *host page's* chrome (title bar, share menu) before it reaches into
    the artifact's iframe — don't trust element refs here. Use pixel

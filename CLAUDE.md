@@ -43,6 +43,9 @@ with Java source organized as:
     generate.py             # script that produced it, kept for future regeneration
   .vscode/
     launch.json    # Run/Debug config for VS Code, see "VS Code Run Configuration" below
+  explainer/
+    index.html     # interactive step-through artifact, Mode: Learning only —
+                    # see "Interactive Explainer" below
   README.md      # short problem description + patterns used; starts with a
                   # "Mode: Learning" or "Mode: Interview" banner (see Git
                   # Conventions below) so design ownership is clear at a glance
@@ -111,6 +114,31 @@ Create `<problem-name>/.vscode/launch.json`:
 - Mention in the final summary that the "Extension Pack for Java" (Microsoft)
   is required for this to work, in case it isn't already installed.
 
+## Interactive Explainer (Mode: Learning only, after implementation)
+
+Every Mode: Learning problem gets an interactive "step through the code"
+artifact at `<problem-name>/explainer/index.html`, built per
+`docs/tooling/interactive-explainer-guide.md` — **do not** re-derive the
+trace-log mechanics or visual design from scratch; that guide exists
+specifically to avoid burning tokens on that per problem.
+
+- **Build it inline, in the same session, right after finishing the
+  problem — never delegate this to a subagent for a problem you just
+  built.** The source is already in your context; a cold subagent has to
+  re-read the whole `src/` tree plus the guide plus a reference file from
+  zero, which measured 127K-150K tokens per problem versus a fraction of
+  that when built inline from context already in hand. Only delegate when
+  batch-building explainers for problems whose source genuinely isn't in
+  your current context (e.g. catching up several already-finished
+  problems in one sweep), and even then batch multiple problems into ONE
+  agent call rather than one agent per problem.
+- **Don't publish it to the Artifact tool by default.** The committed
+  local file (open directly in a browser, per every problem's README) is
+  the deliverable. Only publish — and only then load the `artifact-design`
+  skill — if the user explicitly asks for a shareable link.
+- Mention the file in the final summary, same as the diagrams and launch
+  config.
+
 ## Mode: Interview
 
 Triggered by: `/interview` or explicit request for "interview mode."
@@ -153,6 +181,8 @@ Claude owns the full process for a given problem:
    - Explain *why* each design pattern was chosen, not just what it is
    - Suggest specific breakpoints/lines to inspect while stepping through
    - Keep explanations concrete and grounded in the code just written, not generic
+8. Build the interactive step-through explainer (see "Interactive
+   Explainer" below) — inline, in this same session, not via a subagent
 
 ## Testing & Validation (both modes)
 
