@@ -71,6 +71,9 @@ ecommerce/
   test/
     input/scenario.txt   Happy path (checkout → deliver) + every edge case below
     output/output.txt    Captured run transcript
+  explainer/index.html   Interactive step-through: build a cart, tap "Next step" to watch the real
+                          checkout() chain-of-responsibility + builder execute, then walk an order
+                          through its State-pattern lifecycle (open directly in a browser)
   diagrams/
     generate.py       Data-only script that builds ecommerce.drawio via docs/tooling/drawio_uml.py
     ecommerce.drawio   Class diagram + 3 sequence diagrams (checkout, lifecycle, cancel)

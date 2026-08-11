@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ecommerce — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:820px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 18px; min-height:18px; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:96px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn.picked { border-color:var(--amber); background:var(--open-fill); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); }
+
+  /* product shelf */
+  .shelf { display:flex; flex-direction:column; gap:8px; margin:14px 0; }
+  .shelf-item { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border:1.5px solid var(--line-strong); border-radius:10px; background:var(--paper); transition:all .3s; }
+  .shelf-item.hl { border-color:var(--amber); box-shadow:0 0 0 4px var(--amber-glow); transform:scale(1.02); }
+  .shelf-item.ok { border-color:var(--open); background:var(--open-fill); }
+  .shelf-item.reject { border-color:var(--taken); background:var(--taken-fill); }
+  .shelf-item .info { display:flex; flex-direction:column; }
+  .shelf-item .name { font-weight:700; font-size:13px; }
+  .shelf-item .meta { font-size:10.5px; color:var(--ink-faint); }
+  .shelf-item .stock { font-size:11px; font-weight:800; color:var(--ink-dim); white-space:nowrap; }
+  .qty-row { display:flex; gap:6px; }
+  .qty-btn { padding:5px 9px; border:1.5px solid var(--line-strong); border-radius:999px; background:var(--surface-2); font-size:11px; font-weight:700; color:var(--ink-dim); cursor:pointer; }
+  .qty-btn:hover { border-color:var(--amber); }
+
+  /* cart box */
+  .cart-box { margin:14px 0; }
+  .cart-box .t { font-size:11px; font-weight:800; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:6px; }
+  .chip { padding:8px 10px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--paper); font-size:12px; color:var(--ink-dim); margin-bottom:6px; }
+  .cart-line { display:flex; justify-content:space-between; align-items:center; }
+  .chip-x { cursor:pointer; color:var(--taken); font-weight:800; margin-left:10px; }
+  .chip-x:hover { text-decoration:underline; }
+
+  .order-card { width:240px; margin:10px auto; background:var(--paper); border:1.5px dashed var(--line-strong); border-radius:10px; padding:12px; text-align:center; }
+  .order-card .oid { font-size:16px; font-weight:800; }
+  .order-card .row { display:flex; justify-content:space-between; font-size:11px; color:var(--ink-dim); margin-top:4px; gap:8px; }
+  .order-card .row span:last-child { color:var(--ink); font-weight:700; text-align:right; }
+
+  .total-num { font-size:34px; font-weight:800; color:var(--open); text-align:center; margin:8px 0 2px; }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  button.cta:disabled { opacity:.35; cursor:not-allowed; }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+
+  /* trace console */
+  .trace-card { max-height:640px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Ecommerce · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Pick items for the cart to start — every click below logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var state = {
+  products: [
+    {sku:'LAPTOP001', name:'Laptop_Pro', price:1200.00, stock:5},
+    {sku:'MOUSE001', name:'Wireless_Mouse', price:25.00, stock:50},
+    {sku:'KEYBOARD001', name:'Mechanical_KB', price:75.00, stock:20}
+  ],
+  customerSeq:0,
+  orderSeq:1,
+  current:null,
+  shelfMark:{}
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function productBySku(sku){
+  for (var i=0;i<state.products.length;i++) if (state.products[i].sku===sku) return state.products[i];
+  return null;
+}
+function cartFind(sku){
+  var cart = state.current.cart;
+  for (var i=0;i<cart.length;i++) if (cart[i].sku===sku) return cart[i];
+  return null;
+}
+function cartAdd(sku, qty){
+  var existing = cartFind(sku);
+  if (existing) existing.qty += qty; else state.current.cart.push({sku:sku, qty:qty});
+}
+function cartRemove(sku){
+  state.current.cart = state.current.cart.filter(function(ci){ return ci.sku !== sku; });
+}
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+// ---------- shelf (live inventory board) ----------
+function renderShelf(withControls){
+  return '<div class="shelf">'+state.products.map(function(p){
+    var mark = state.shelfMark[p.sku] || '';
+    var cls = 'shelf-item'+(mark?' '+mark:'');
+    var controls = withControls ? '<div class="qty-row">'+
+        [1,3,25].map(function(q){ return '<button class="qty-btn" data-sku="'+p.sku+'" data-qty="'+q+'">+'+q+'</button>'; }).join('')+
+      '</div>' : '';
+    return '<div class="'+cls+'" data-sku="'+p.sku+'">'+
+      '<div class="info"><span class="name">'+esc(p.name)+'</span><span class="meta mono">'+p.sku+' · $'+p.price.toFixed(2)+'</span></div>'+
+      '<div class="stock mono">stock=<span class="stock-num" data-stock-sku="'+p.sku+'">'+p.stock+'</span></div>'+
+      controls+'</div>';
+  }).join('')+'</div>';
+}
+function markShelf(sku, cls){
+  state.shelfMark[sku] = cls;
+  var el = document.querySelector('.shelf-item[data-sku="'+sku+'"]');
+  if (el){ el.classList.remove('hl','ok','reject'); el.classList.add(cls); }
+}
+function highlightShelf(sku){
+  Array.prototype.forEach.call(document.querySelectorAll('.shelf-item'), function(s){ s.classList.remove('hl'); });
+  var el = document.querySelector('.shelf-item[data-sku="'+sku+'"]'); if (el) el.classList.add('hl');
+}
+function decreaseShelfStock(sku, qty){
+  var p = productBySku(sku); p.stock -= qty;
+  var el = document.querySelector('.stock-num[data-stock-sku="'+sku+'"]'); if (el) el.textContent = p.stock;
+  markShelf(sku, 'ok');
+}
+function increaseShelfStock(sku, qty){
+  var p = productBySku(sku); p.stock += qty;
+  var el = document.querySelector('.stock-num[data-stock-sku="'+sku+'"]'); if (el) el.textContent = p.stock;
+  highlightShelf(sku);
+}
+function showComputedTotal(total){
+  var el = document.getElementById('computed-total'); if (el) el.textContent = '$'+total.toFixed(2);
+}
+
+// ---------- cart box ----------
+function renderCartBox(cart, removable){
+  var el = '<div class="cart-box"><div class="t">Cart — '+state.current.customerId+'</div>';
+  if (!cart.length) return el+'<div class="trace-empty" style="padding:4px 0">empty — add something from the shelf</div></div>';
+  var lines = cart.map(function(ci){
+    var p = productBySku(ci.sku);
+    var rm = removable ? '<span class="chip-x" data-rm="'+ci.sku+'">remove</span>' : '';
+    return '<div class="chip cart-line"><span>'+ci.qty+'x '+ci.sku+' ('+esc(p.name)+') @ $'+p.price.toFixed(2)+'</span>'+rm+'</div>';
+  }).join('');
+  return el+lines+'</div>';
+}
+
+// ---------- order card ----------
+function renderOrderCard(order){
+  var itemsText = order.items.map(function(i){ return i.qty+'x '+i.sku; }).join(', ');
+  return '<div class="order-card"><div class="oid mono">'+order.id+'</div>'+
+    '<div class="row"><span>Customer</span><span class="mono">'+order.customerId+'</span></div>'+
+    '<div class="row"><span>Items</span><span class="mono">'+esc(itemsText)+'</span></div>'+
+    '<div class="row"><span>Total</span><span class="mono">$'+order.total.toFixed(2)+'</span></div>'+
+    '<div class="row"><span>Status</span><span class="mono" id="order-status">'+order.status+'</span></div></div>';
+}
+function setOrderStatus(order, status){
+  order.status = status;
+  var el = document.getElementById('order-status'); if (el) el.textContent = status;
+}
+
+// ================== SCREEN 1: shop ==================
+function screenShop(){
+  if (!state.current){
+    state.customerSeq++;
+    var customerId = 'customer'+state.customerSeq;
+    state.current = { customerId:customerId, cart:[], couponCode:'NONE', paymentMethod:'CARD' };
+    state.shelfMark = {};
+    logDivider('— '+customerId+' session —');
+    logStep('Cart cart = cartsByCustomerId.computeIfAbsent("'+customerId+'", Cart::new);',
+      'new empty cart created for '+customerId);
+  }
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>Build a cart</h1><p class="stage-cap">'+state.current.customerId+' is shopping. Tap a quantity to add an item.</p>'+
+      renderShelf(true)+
+      renderCartBox(state.current.cart, true)+
+      '<div class="actions"><button class="cta" id="to-checkout"'+(state.current.cart.length?'':' disabled')+'>Checkout →</button></div>';
+    Array.prototype.forEach.call(el.querySelectorAll('.qty-btn'), function(b){
+      b.addEventListener('click', function(){
+        var sku=b.getAttribute('data-sku'), qty=parseInt(b.getAttribute('data-qty'),10);
+        var existing = cartFind(sku), before = existing ? existing.qty : 0;
+        cartAdd(sku, qty);
+        var after = cartFind(sku).qty;
+        logStep('service.addToCart("'+state.current.customerId+'", "'+sku+'", '+qty+');  // getCart(customerId).addItem(product, quantity)',
+          existing
+            ? ('itemsBySku.merge(...) -> existing '+before+'x + added '+qty+'x = '+after+'x '+sku)
+            : (qty+'x '+sku+' added to cart (new line)'));
+        render();
+      });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-rm]'), function(b){
+      b.addEventListener('click', function(){
+        var sku=b.getAttribute('data-rm');
+        cartRemove(sku);
+        logStep('service.removeFromCart("'+state.current.customerId+'", "'+sku+'");  // getCart(customerId).removeItem(sku)',
+          sku+' line removed from cart');
+        render();
+      });
+    });
+    var toCheckout = document.getElementById('to-checkout');
+    if (toCheckout && !toCheckout.disabled) toCheckout.addEventListener('click', screenCheckoutSetup);
+  }
+}
+
+// ================== SCREEN 2: checkout setup ==================
+function screenCheckoutSetup(){
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    var c = state.current;
+    el.innerHTML='<h1>Checkout details</h1><p class="stage-cap">Pick a coupon and a payment method for '+c.customerId+'.</p>'+
+      renderCartBox(c.cart, false)+
+      '<div class="stage-cap" style="margin:14px 0 4px">Coupon code</div>'+
+      '<div class="choice-row">'+
+      [['NONE','No coupon','0% off'],['SAVE10','SAVE10','10% off'],['SAVE20','SAVE20','20% off']].map(function(o){
+        return '<button class="choice-btn'+(c.couponCode===o[0]?' picked':'')+'" data-coupon="'+o[0]+'"><span class="label">'+o[1]+'</span><span class="sub">'+o[2]+'</span></button>';
+      }).join('')+'</div>'+
+      '<div class="stage-cap" style="margin:14px 0 4px">Payment method</div>'+
+      '<div class="choice-row">'+
+      [['CARD','CARD','authorizes normally'],['INVALID_CARD','INVALID_CARD','declined test token']].map(function(o){
+        return '<button class="choice-btn'+(c.paymentMethod===o[0]?' picked':'')+'" data-pay="'+o[0]+'"><span class="label">'+o[1]+'</span><span class="sub">'+o[2]+'</span></button>';
+      }).join('')+'</div>'+
+      '<div class="actions"><button class="cta ghost" id="back-shop">← Back to cart</button>'+
+      '<button class="cta" id="run-checkout">Run checkout →</button></div>';
+    Array.prototype.forEach.call(el.querySelectorAll('[data-coupon]'), function(b){
+      b.addEventListener('click', function(){ c.couponCode=b.getAttribute('data-coupon'); render(); });
+    });
+    Array.prototype.forEach.call(el.querySelectorAll('[data-pay]'), function(b){
+      b.addEventListener('click', function(){ c.paymentMethod=b.getAttribute('data-pay'); render(); });
+    });
+    document.getElementById('back-shop').addEventListener('click', screenShop);
+    document.getElementById('run-checkout').addEventListener('click', function(){
+      logDivider('— checkout: '+c.customerId+' —');
+      logStep('Order order = service.checkout("'+c.customerId+'", "123_Main_St", '+(c.couponCode==='NONE'?'null':'"'+c.couponCode+'"')+', "'+c.paymentMethod+'");',
+        c.cart.length+' cart line(s) · coupon='+c.couponCode+' · payment='+c.paymentMethod);
+      state.shelfMark = {};
+      screenCheckoutSteps();
+    });
+  }
+}
+
+// ---------- build the real checkout() trace ----------
+function buildCheckoutSteps(){
+  var c = state.current, steps=[], failedStock=null;
+
+  // StockAvailabilityHandler.validate(context)
+  for (var i=0;i<c.cart.length;i++){
+    var ci=c.cart[i], p=productBySku(ci.sku);
+    if (p.stock < ci.qty){
+      steps.push({code:'if (product.getStockQuantity() < item.getQuantity()) throw new OutOfStockException(...);  // '+ci.sku,
+        detail:'stock('+p.stock+') < requested('+ci.qty+') -> StockAvailabilityHandler rejects',
+        effect:(function(sku){ return function(){ markShelf(sku,'reject'); }; })(ci.sku)});
+      failedStock = {sku:ci.sku, requested:ci.qty, available:p.stock};
+      break;
+    }
+    steps.push({code:'if (product.getStockQuantity() < item.getQuantity()) { ... }  // '+ci.sku,
+      detail:'stock('+p.stock+') >= requested('+ci.qty+') -> ok',
+      effect:(function(sku){ return function(){ markShelf(sku,'ok'); }; })(ci.sku)});
+  }
+  if (failedStock) return {steps:steps, outcome:'OUT_OF_STOCK', detail:failedStock};
+
+  // PriceValidationHandler.validate(context)
+  var subtotal=0;
+  c.cart.forEach(function(ci){ subtotal += productBySku(ci.sku).price*ci.qty; });
+  steps.push({code:'subtotal += product.getPrice() * item.getQuantity();  // PriceValidationHandler',
+    detail:'subtotal = $'+subtotal.toFixed(2)+' across '+c.cart.length+' line item(s), recomputed from catalog prices'});
+  var discountPct = c.couponCode==='SAVE10' ? 0.10 : c.couponCode==='SAVE20' ? 0.20 : 0.0;
+  var total = subtotal*(1-discountPct);
+  steps.push({code:'context.setComputedTotal(subtotal * (1 - discount));',
+    detail:'COUPON_DISCOUNTS.getOrDefault("'+c.couponCode+'", 0.0) = '+discountPct+' -> computedTotal = $'+total.toFixed(2),
+    effect:function(){ showComputedTotal(total); }});
+
+  // PaymentAuthorizationHandler.validate(context)
+  if (c.paymentMethod === 'INVALID_CARD'){
+    steps.push({code:'if (DECLINED_METHOD.equals(context.getPaymentMethod())) throw new PaymentDeclinedException(...);',
+      detail:'"INVALID_CARD".equals("INVALID_CARD") -> true -> PaymentAuthorizationHandler rejects'});
+    return {steps:steps, outcome:'DECLINED', total:total};
+  }
+  steps.push({code:'if (DECLINED_METHOD.equals(context.getPaymentMethod())) { ... }  // passes',
+    detail:'"'+c.paymentMethod+'" is not "INVALID_CARD" -> authorized'});
+
+  // OrderBuilder assembly
+  var orderId = 'O'+state.orderSeq;
+  steps.push({code:'OrderBuilder builder = new OrderBuilder().orderId("'+orderId+'").customerId("'+c.customerId+'")'+
+      '.shippingAddress("123_Main_St").totalAmount('+total.toFixed(2)+').couponCode('+(c.couponCode==='NONE'?'null':'"'+c.couponCode+'"')+');',
+    detail:'orderSequence.getAndIncrement() -> '+orderId,
+    effect:function(){ state.orderSeq++; }});
+
+  var orderItems=[];
+  c.cart.forEach(function(ci){
+    var p = productBySku(ci.sku), before = p.stock;
+    steps.push({code:'product.decreaseStock(item.getQuantity()); builder.addItem(product, item.getQuantity(), product.getPrice());  // '+ci.sku,
+      detail: ci.sku+' stock '+before+' -> '+(before-ci.qty)+', line = '+ci.qty+'x @ $'+p.price.toFixed(2),
+      effect:(function(sku,qty){ return function(){ decreaseShelfStock(sku,qty); }; })(ci.sku, ci.qty)});
+    orderItems.push({sku:ci.sku, name:p.name, qty:ci.qty, price:p.price});
+  });
+
+  steps.push({code:'Order order = builder.build();',
+    detail:'orderId/customerId/shippingAddress present, '+orderItems.length+' item(s) -> constructed, state=PlacedState.INSTANCE'});
+  steps.push({code:'orderRepository.save(order); cart.clear();',
+    detail: orderId+' saved to orderRepository; cart for '+c.customerId+' is now empty',
+    effect:function(){ c.cart.length = 0; }});
+
+  return {steps:steps, outcome:'PLACED',
+    order:{id:orderId, customerId:c.customerId, items:orderItems, total:total, couponCode:c.couponCode, status:'PLACED'}};
+}
+
+// ================== SCREEN 3: checkout steps ==================
+function screenCheckoutSteps(){
+  var result = buildCheckoutSteps(), steps = result.steps, idx = 0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>Running checkout()</h1><p class="stage-cap">Tap through the validation chain, then the builder.</p>'+
+      '<div class="total-num mono" id="computed-total">$0.00</div>'+
+      renderShelf(false)+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s = steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx >= steps.length){
+        setTimeout(function(){
+          if (result.outcome === 'PLACED') screenOrderPlaced(result.order);
+          else screenCheckoutFailed(result);
+        }, 250);
+      } else render();
+    });
+  }
+}
+
+// ================== outcome: checkout failed ==================
+function screenCheckoutFailed(result){
+  var el=document.getElementById('stage');
+  var c = state.current, msg, note;
+  if (result.outcome === 'OUT_OF_STOCK'){
+    msg = 'OutOfStockException: Insufficient stock for '+result.detail.sku+': requested '+result.detail.requested+', available '+result.detail.available;
+    note = 'Chain of Responsibility stopped at StockAvailabilityHandler, the first link — nothing was reserved, the cart is untouched.';
+  } else {
+    msg = 'PaymentDeclinedException: Payment authorization declined for method '+c.paymentMethod;
+    note = 'Chain of Responsibility stopped at PaymentAuthorizationHandler, the last link — stock was never decremented since OrderBuilder only runs after the whole chain passes.';
+  }
+  el.innerHTML='<h1>Checkout rejected</h1><p class="stage-cap">'+esc(msg)+'</p>'+
+    '<p class="stage-cap" style="margin-top:-10px">'+esc(note)+'</p>'+
+    renderShelf(false)+
+    '<div class="actions"><button class="cta ghost" id="back-cart">Adjust cart →</button>'+
+    '<button class="cta" id="back-checkout">Change coupon/payment →</button></div>';
+  document.getElementById('back-cart').addEventListener('click', screenShop);
+  document.getElementById('back-checkout').addEventListener('click', screenCheckoutSetup);
+}
+
+// ================== outcome: order placed ==================
+function screenOrderPlaced(order){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Order placed</h1><p class="stage-cap">'+order.id+' — '+order.customerId+'</p>'+
+    renderOrderCard(order)+renderShelf(false)+
+    '<div class="actions"><button class="cta" data-path="DELIVER">Walk the lifecycle: confirm → ship → deliver</button>'+
+    '<button class="cta ghost" data-path="CANCEL">Cancel instead (restocks inventory)</button></div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-path]'), function(b){
+    b.addEventListener('click', function(){
+      var path = b.getAttribute('data-path');
+      logDivider('— lifecycle: '+order.id+' ('+path+') —');
+      screenLifecycleSteps(order, path);
+    });
+  });
+}
+
+// ---------- build the real lifecycle trace ----------
+function buildLifecycleSteps(order, path){
+  var steps=[];
+  if (path === 'DELIVER'){
+    steps.push({code:'orderRepository.findById("'+order.id+'").confirm();  // state = state.confirm()',
+      detail:'PlacedState -> ConfirmedState (PLACED -> CONFIRMED)', effect:function(){ setOrderStatus(order,'CONFIRMED'); }});
+    steps.push({code:'orderRepository.findById("'+order.id+'").ship();  // state = state.ship()',
+      detail:'ConfirmedState -> ShippedState (CONFIRMED -> SHIPPED)', effect:function(){ setOrderStatus(order,'SHIPPED'); }});
+    steps.push({code:'orderRepository.findById("'+order.id+'").deliver();  // state = state.deliver()',
+      detail:'ShippedState -> DeliveredState (SHIPPED -> DELIVERED, terminal)', effect:function(){ setOrderStatus(order,'DELIVERED'); }});
+  } else {
+    var fromStatus = order.status;
+    steps.push({code:'orderRepository.findById("'+order.id+'").cancel();  // state = state.cancel()',
+      detail: fromStatus+'State -> CancelledState ('+fromStatus+' -> CANCELLED)', effect:function(){ setOrderStatus(order,'CANCELLED'); }});
+    order.items.forEach(function(it){
+      steps.push({code:'productRepository.findBySku("'+it.sku+'").increaseStock('+it.qty+');',
+        detail: it.sku+' restocked +'+it.qty,
+        effect:(function(sku,qty){ return function(){ increaseShelfStock(sku,qty); }; })(it.sku, it.qty)});
+    });
+  }
+  return steps;
+}
+
+// ================== SCREEN 4: lifecycle steps ==================
+function screenLifecycleSteps(order, path){
+  var steps = buildLifecycleSteps(order, path), idx = 0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>Walking the lifecycle</h1><p class="stage-cap">Tap through the real transition calls.</p>'+
+      renderOrderCard(order)+renderShelf(false)+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s = steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx >= steps.length){ setTimeout(function(){ screenSettled(order); }, 250); } else render();
+    });
+  }
+}
+
+// ================== outcome: settled ==================
+function screenSettled(order){
+  var el=document.getElementById('stage');
+  var title = order.status === 'DELIVERED' ? 'Delivered' : 'Cancelled — restocked';
+  el.innerHTML='<h1>'+title+'</h1><p class="stage-cap">'+order.id+' has settled into a terminal state.</p>'+
+    renderOrderCard(order)+renderShelf(false)+
+    '<div class="actions"><button class="cta ghost" id="illegal">Try an illegal transition →</button>'+
+    '<button class="cta" id="again">Shop again ↻</button></div>';
+  document.getElementById('again').addEventListener('click', function(){ state.current=null; screenShop(); });
+  var illegalBtn = document.getElementById('illegal');
+  illegalBtn.addEventListener('click', function(){
+    if (order.status === 'DELIVERED'){
+      logStep('orderRepository.findById("'+order.id+'").cancel();  // DeliveredState has no cancel() override -> interface default',
+        'throws InvalidOrderStateException: Cannot cancel order in status DELIVERED');
+    } else {
+      logStep('orderRepository.findById("'+order.id+'").ship();  // CancelledState has no ship() override -> interface default',
+        'throws InvalidOrderStateException: Cannot ship order in status CANCELLED');
+    }
+    illegalBtn.disabled = true;
+  });
+}
+
+screenShop();
+})();
+</script>
+</body>
+</html>
