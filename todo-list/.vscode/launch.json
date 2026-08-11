@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run Main (scenario.txt)",
+            "request": "launch",
+            "mainClass": "Main",
+            "args": ["test/input/scenario.txt", "test/output/output.txt"],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}

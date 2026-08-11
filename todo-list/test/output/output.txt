@@ -1,0 +1,49 @@
+> ADD BuyGroceries MEDIUM 2
+OK added T1 (BuyGroceries, MEDIUM, due in 2d)
+> ADD FileTaxes HIGH 5
+OK added T2 (FileTaxes, HIGH, due in 5d)
+> ADD ReadBook LOW 30
+OK added T3 (ReadBook, LOW, due in 30d)
+> LIST CREATED
+LIST (CREATED)
+  T1 [TODO] BuyGroceries priority=MEDIUM dueInDays=2
+  T2 [TODO] FileTaxes priority=HIGH dueInDays=5
+  T3 [TODO] ReadBook priority=LOW dueInDays=30
+> START T1
+OK T1 -> IN_PROGRESS
+> COMPLETE T1
+OK T1 -> DONE
+> ARCHIVE T1
+OK T1 -> ARCHIVED
+> COMPLETE T2
+OK T2 -> DONE
+> REOPEN T2
+OK T2 -> TODO
+> START T2
+OK T2 -> IN_PROGRESS
+> LIST PRIORITY
+LIST (PRIORITY)
+  T2 [IN_PROGRESS] FileTaxes priority=HIGH dueInDays=5
+  T1 [ARCHIVED] BuyGroceries priority=MEDIUM dueInDays=2
+  T3 [TODO] ReadBook priority=LOW dueInDays=30
+> LIST DUE
+LIST (DUE)
+  T1 [ARCHIVED] BuyGroceries priority=MEDIUM dueInDays=2
+  T2 [IN_PROGRESS] FileTaxes priority=HIGH dueInDays=5
+  T3 [TODO] ReadBook priority=LOW dueInDays=30
+> START T1
+ERROR InvalidTaskTransitionException: Cannot start a task that is ARCHIVED
+> REOPEN T3
+ERROR InvalidTaskTransitionException: Cannot reopen a task that is TODO
+> ARCHIVE T3
+ERROR InvalidTaskTransitionException: Cannot archive a task that is TODO
+> COMPLETE T3
+OK T3 -> DONE
+> DELETE T3
+OK deleted T3
+> LIST CREATED
+LIST (CREATED)
+  T1 [ARCHIVED] BuyGroceries priority=MEDIUM dueInDays=2
+  T2 [IN_PROGRESS] FileTaxes priority=HIGH dueInDays=5
+> START ghost-task
+ERROR TaskNotFoundException: No task found with id: ghost-task

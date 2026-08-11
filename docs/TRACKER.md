@@ -57,7 +57,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [x] Splitwise `[learning-mode]`
 - [ ] Stock-Subscription System
 - [ ] Multi-threaded Concurrent Stock Exchange App
-- [ ] Stock Broker System
+- [x] Stock Broker System `[learning-mode]`
 - [x] ATM `[learning-mode]`
 
 ### Scheduling / Infra / Systems
@@ -72,5 +72,5 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [ ] Pub-Sub Based Messaging Queue
 
 ### Misc
-- [ ] TODO List
+- [x] TODO List `[learning-mode]`
 - [ ] CrickInfo

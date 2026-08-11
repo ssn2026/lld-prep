@@ -1,0 +1,35 @@
+# TODO List demo script
+# ADD <title> <LOW|MEDIUM|HIGH> <dueInDays>
+
+ADD BuyGroceries MEDIUM 2
+ADD FileTaxes HIGH 5
+ADD ReadBook LOW 30
+LIST CREATED
+
+# happy path: TODO -> IN_PROGRESS -> DONE -> ARCHIVED
+START T1
+COMPLETE T1
+ARCHIVE T1
+
+# TODO -> DONE directly (quick-complete, skip IN_PROGRESS)
+COMPLETE T2
+
+# DONE -> TODO (reopen a mistakenly completed task), then start it properly
+REOPEN T2
+START T2
+
+LIST PRIORITY
+LIST DUE
+
+# --- illegal transitions ---
+START T1
+REOPEN T3
+ARCHIVE T3
+
+# --- delete ---
+COMPLETE T3
+DELETE T3
+LIST CREATED
+
+# --- unknown task id ---
+START ghost-task
