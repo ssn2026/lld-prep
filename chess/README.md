@@ -80,6 +80,9 @@ chess/
   test/
     input/scenario.txt   Illegal-move edge cases + Fool's Mate (fastest real checkmate)
     output/output.txt    Captured run transcript
+  explainer/index.html   Interactive step-through: tap "Next step" to watch the real
+                          ChessGameService.makeMove() call chain execute on a live 8x8 board
+                          through Fool's Mate and its illegal-move edge cases (open directly in a browser)
 ```
 
 ## Running it

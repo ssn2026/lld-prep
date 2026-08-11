@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chess — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#8f6d2e; --amber-strong:#725526; --amber-glow:rgba(143,109,46,.5); --on-amber:#fbf3e2;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --sq-light:#ecdfc4; --sq-dark:#93714a; --sq-line:#5c4327;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#c9a24f; --amber-strong:#dbb968; --amber-glow:rgba(201,162,79,.45); --on-amber:#221805;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --sq-light:#5f5546; --sq-dark:#39301f; --sq-line:#1c1710;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#c9a24f; --amber-strong:#dbb968; --amber-glow:rgba(201,162,79,.45); --on-amber:#221805;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --sq-light:#5f5546; --sq-dark:#39301f; --sq-line:#1c1710;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:820px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 18px; min-height:18px; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .player-card { flex:1; min-width:120px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; }
+  .player-card .avatar { width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:20px; border:1.5px solid var(--line-strong); background:var(--surface-2); }
+  .player-card .label { font-size:12.5px; font-weight:700; }
+  .player-card .sub { font-size:10px; color:var(--ink-faint); }
+
+  /* board */
+  .board-shell { max-width:340px; margin:0 auto; }
+  .board { display:grid; grid-template-columns:repeat(8,1fr); border:2px solid var(--sq-line); border-radius:8px; overflow:hidden; box-shadow:var(--shadow); }
+  .sq { position:relative; aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; font-size:min(6vw,26px); line-height:1; transition:box-shadow .25s; }
+  .sq.light { background:var(--sq-light); }
+  .sq.dark { background:var(--sq-dark); }
+  .sq .piece { filter:drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+  .sq .piece.w { color:#fdfaf3; -webkit-text-stroke:.6px #2a2213; }
+  .sq .piece.b { color:#1c1712; }
+  .sq .rank-num { position:absolute; top:1px; left:2px; font-size:8px; font-weight:800; opacity:.55; }
+  .sq.hl { box-shadow:inset 0 0 0 3px var(--amber); }
+  .sq.last-move { box-shadow:inset 0 0 0 2px var(--amber-strong); }
+  .sq.reject { box-shadow:inset 0 0 0 3px var(--taken); }
+  .sq.in-check { box-shadow:inset 0 0 0 3px var(--taken); animation:pulse 1.3s ease infinite; }
+  @keyframes pulse { 0%,100%{ box-shadow:inset 0 0 0 3px var(--taken); } 50%{ box-shadow:inset 0 0 0 6px var(--taken); } }
+  .file-row { display:grid; grid-template-columns:repeat(8,1fr); max-width:340px; margin:4px auto 0; }
+  .file-row span { text-align:center; font-size:10px; font-weight:800; color:var(--ink-faint); }
+  .status-bar { text-align:center; font-size:11.5px; color:var(--ink-dim); margin-top:10px; }
+  .status-bar b { color:var(--ink); }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+
+  .outcome-banner { text-align:center; padding:14px; border-radius:12px; margin:10px 0 4px; font-weight:800; font-size:15px; }
+  .outcome-banner.mate { background:var(--taken-fill); color:var(--taken); }
+
+  /* trace console */
+  .trace-card { max-height:640px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-result { font-size:12px; font-weight:800; padding:6px 10px; border-radius:8px; margin-top:2px; }
+  .trace-result.ok { background:var(--open-fill); color:var(--open); }
+  .trace-result.err { background:var(--taken-fill); color:var(--taken); }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } .sq.in-check{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Chess · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Set up the board to start — every tap logs the real ChessGameService line it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var BACK_RANK = ['R','N','B','Q','K','B','N','R'];
+var PIECE_NAME = { P:'Pawn', N:'Knight', B:'Bishop', R:'Rook', Q:'Queen', K:'King' };
+var GLYPH_W = { P:'♙', N:'♘', B:'♗', R:'♖', Q:'♕', K:'♔' };
+var GLYPH_B = { P:'♟', N:'♞', B:'♝', R:'♜', Q:'♛', K:'♚' };
+
+var state = {
+  board: makeEmptyBoard(),
+  turn: 'WHITE',
+  status: 'IN_PROGRESS',
+  lastMove: null,
+  checkSq: null,
+  rejectSquares: null,
+  winner: null
+};
+
+function makeEmptyBoard(){
+  var b = [];
+  for (var r = 0; r < 8; r++) { b.push([null,null,null,null,null,null,null,null]); }
+  return b;
+}
+function sqToRC(alg){ return { r: alg.charCodeAt(1) - 49, c: alg.charCodeAt(0) - 97 }; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d = document.createElement('div'); d.className = 'trace-divider'; d.textContent = text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className = 'trace-step';
+  div.innerHTML = '<div class="code mono">' + esc(codeLine) + '</div><div class="detail">' + esc(detail) + '</div>';
+  log.appendChild(div);
+  div.scrollIntoView({ block:'end', behavior:'smooth' });
+  if (effect) effect();
+}
+function logResult(text, ok){
+  var log = document.getElementById('trace-log');
+  var div = document.createElement('div'); div.className = 'trace-result ' + (ok ? 'ok' : 'err') + ' mono';
+  div.textContent = text;
+  log.appendChild(div);
+  div.scrollIntoView({ block:'end', behavior:'smooth' });
+}
+
+// ---------- board rendering ----------
+function boardCardHTML(){
+  var rows = '';
+  for (var r = 7; r >= 0; r--) {
+    for (var c = 0; c < 8; c++) {
+      var piece = state.board[r][c];
+      var alg = String.fromCharCode(97 + c) + (r + 1);
+      var cls = 'sq ' + ((r + c) % 2 === 0 ? 'dark' : 'light');
+      if (state.lastMove && (alg === state.lastMove.from || alg === state.lastMove.to)) cls += ' last-move';
+      if (state.checkSq === alg) cls += ' in-check';
+      if (state.rejectSquares && state.rejectSquares.indexOf(alg) !== -1) cls += ' reject';
+      var inner = '';
+      if (c === 0) inner += '<span class="rank-num mono">' + (r + 1) + '</span>';
+      if (piece) {
+        var g = piece.color === 'W' ? GLYPH_W[piece.type] : GLYPH_B[piece.type];
+        inner += '<span class="piece ' + (piece.color === 'W' ? 'w' : 'b') + '">' + g + '</span>';
+      }
+      rows += '<div class="' + cls + '" data-sq="' + alg + '">' + inner + '</div>';
+    }
+  }
+  var files = '';
+  for (var f = 0; f < 8; f++) { files += '<span>' + String.fromCharCode(97 + f) + '</span>'; }
+  return '<div class="board-shell"><div class="board">' + rows + '</div>' +
+    '<div class="file-row">' + files + '</div>' +
+    '<div class="status-bar mono">turn=<b>' + state.turn + '</b>&nbsp;&nbsp;status=<b>' + state.status + '</b></div></div>';
+}
+function flashSquares(cls, squares){
+  Array.prototype.forEach.call(document.querySelectorAll('.sq'), function(sq){ sq.classList.remove(cls); });
+  squares.forEach(function(alg){
+    var el = document.querySelector('.sq[data-sq="' + alg + '"]'); if (el) el.classList.add(cls);
+  });
+}
+function movePieceEffect(from, to){
+  return function(){
+    var f = sqToRC(from), t = sqToRC(to);
+    var piece = state.board[f.r][f.c];
+    state.board[t.r][t.c] = piece;
+    state.board[f.r][f.c] = null;
+    state.lastMove = { from: from, to: to };
+    flashSquares('hl', [from, to]);
+  };
+}
+function rejectFlash(from, to){
+  return function(){
+    state.rejectSquares = [from, to];
+    flashSquares('reject', [from, to]);
+  };
+}
+
+// ---------- screens ----------
+function screenIntro(){
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Fool’s Mate</h1>' +
+    '<p class="stage-cap">Two players, the fastest checkmate on the board — driven entirely through <span class="mono">ChessGameService</span>.</p>' +
+    '<div class="choice-row">' +
+      '<div class="player-card"><span class="avatar">♔</span><span class="label">Alice</span><span class="sub">P1 · WHITE</span></div>' +
+      '<div class="player-card"><span class="avatar">♚</span><span class="label">Bob</span><span class="sub">P2 · BLACK</span></div>' +
+    '</div>' +
+    '<div class="actions"><button class="cta" id="deal">Set up the board →</button></div>';
+  document.getElementById('deal').addEventListener('click', function(){
+    logDivider('— New game —');
+    logStep('Player white = new Player("P1", "Alice", Color.WHITE);', 'color=WHITE');
+    logStep('Player black = new Player("P2", "Bob", Color.BLACK);', 'color=BLACK');
+    screenSetupSteps();
+  });
+}
+
+function buildSetupSteps(){
+  return [
+    { code:'ChessGameService service = new ChessGameService(white, black);',
+      detail:'currentTurn=WHITE, currentState=InProgressState.INSTANCE (State pattern default), board=new Board() — 8x8 grid, all null' },
+    { code:'for (int col = 0; col < 8; col++) board.placePiece(PieceFactory.createPiece(BACK_RANK_ORDER[col], Color.WHITE, new Position(0, col)), ...);',
+      detail:'PieceFactory builds a1=ROOK, b1=KNIGHT, c1=BISHOP, d1=QUEEN, e1=KING, f1=BISHOP, g1=KNIGHT, h1=ROOK (all WHITE)',
+      effect: function(){ for (var c = 0; c < 8; c++) state.board[0][c] = { type: BACK_RANK[c], color:'W' }; } },
+    { code:'... board.placePiece(PieceFactory.createPiece(PieceType.PAWN, Color.WHITE, new Position(1, col)), ...);',
+      detail:'PieceFactory builds a2..h2, all WHITE PAWN',
+      effect: function(){ for (var c = 0; c < 8; c++) state.board[1][c] = { type:'P', color:'W' }; } },
+    { code:'... board.placePiece(PieceFactory.createPiece(PieceType.PAWN, Color.BLACK, new Position(6, col)), ...);',
+      detail:'PieceFactory builds a7..h7, all BLACK PAWN',
+      effect: function(){ for (var c = 0; c < 8; c++) state.board[6][c] = { type:'P', color:'B' }; } },
+    { code:'... board.placePiece(PieceFactory.createPiece(BACK_RANK_ORDER[col], Color.BLACK, new Position(7, col)), ...);',
+      detail:'PieceFactory builds a8=ROOK, b8=KNIGHT, c8=BISHOP, d8=QUEEN, e8=KING, f8=BISHOP, g8=KNIGHT, h8=ROOK (all BLACK)',
+      effect: function(){ for (var c = 0; c < 8; c++) state.board[7][c] = { type: BACK_RANK[c], color:'B' }; } },
+    { code:'service.addObserver(new ConsoleGameObserver());',
+      detail:'Observer pattern — service now notifies this listener’s onMove/onCheck/onGameOver after every accepted move' }
+  ];
+}
+
+function screenSetupSteps(){
+  var steps = buildSetupSteps(), idx = 0;
+  render();
+  function render(){
+    var el = document.getElementById('stage');
+    el.innerHTML = '<h1>Constructing the game</h1><p class="stage-cap">Tap through the real constructor + <span class="mono">setupBoard()</span>.</p>' +
+      boardCardHTML() + '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s = steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx >= steps.length) { setTimeout(function(){ screenMoveAttempt(0); }, 300); } else { render(); }
+    });
+  }
+}
+
+// ---------- the scripted game: mirrors test/input/scenario.txt exactly ----------
+var ATTEMPTS = [
+  { kind:'reject-empty', from:'e1', to:'e2', mover:'WHITE', pieceLabel:'King',
+    label:'White tries e1 → e2', caption:'Edge case: can the king walk onto its own pawn?',
+    divider:'— MOVE e1 e2 —',
+    result:'ERROR InvalidMoveException: KING cannot move from e1 to e2', ok:false },
+  { kind:'reject-turn', from:'e7', to:'e5', mover:'BLACK', pieceLabel:'Pawn',
+    label:'Black tries e7 → e5', caption:'Edge case: Black moves before White’s first move landed.',
+    divider:'— MOVE e7 e5 (before White has moved) —',
+    result:'ERROR InvalidMoveException: It is WHITE’s turn, not BLACK', ok:false },
+  { kind:'accept', from:'f2', to:'f3', mover:'WHITE', pieceLabel:'Pawn',
+    label:'White plays f2 → f3', caption:'The opening blunder that opens the long diagonal.',
+    divider:'— MOVE f2 f3 —',
+    possibleMovesDetail:'Pawn.getPossibleMoves: direction=+1; oneForward f3 empty → add; hasMoved=false & twoForward f4 empty → add; diagonals e3/g3 empty → no capture targets. moves=[f3, f4] → contains(f3) = true ✓',
+    isMoveLegalDetail:'board.isMoveLegal(piece, f3): simulate on a board copy — White king e1 not attacked afterward → true ✓',
+    promoDetail:'piece.getType()=PAWN, to.getRow()=2 (not 0 or 7) → returns null, no promotion',
+    moveDetail:'new Move(f2, f3, PAWN, WHITE, null, null) → "WHITE PAWN f2-f3"',
+    evaluateDetail:'currentTurn: WHITE → BLACK; GameState.evaluate(board, BLACK): isSquareAttacked(e8,WHITE)=false, hasAnyLegalMove(BLACK)=true → InProgressState (status IN_PROGRESS)',
+    observerDetail:'ConsoleGameObserver.onMove: "[event] move played: WHITE PAWN f2-f3" — status is IN_PROGRESS so no onCheck/onGameOver fires',
+    evaluateEffect: function(){ state.turn = 'BLACK'; state.status = 'IN_PROGRESS'; },
+    result:'OK WHITE PAWN f2-f3 | turn now BLACK, status IN_PROGRESS', ok:true },
+  { kind:'accept', from:'e7', to:'e5', mover:'BLACK', pieceLabel:'Pawn',
+    label:'Black plays e7 → e5', caption:'Classic reply — and it quietly vacates e7.',
+    divider:'— MOVE e7 e5 —',
+    possibleMovesDetail:'Pawn.getPossibleMoves: direction=-1 (black moves toward rank 1); oneForward e6 empty → add; hasMoved=false & twoForward e5 empty → add; diagonals d6/f6 empty → no capture targets. moves=[e6, e5] → contains(e5) = true ✓',
+    isMoveLegalDetail:'board.isMoveLegal(piece, e5): simulate on a board copy — Black king e8 not attacked afterward → true ✓',
+    promoDetail:'piece.getType()=PAWN, to.getRow()=4 (not 0 or 7) → returns null, no promotion',
+    moveDetail:'new Move(e7, e5, PAWN, BLACK, null, null) → "BLACK PAWN e7-e5"',
+    evaluateDetail:'currentTurn: BLACK → WHITE; GameState.evaluate(board, WHITE): isSquareAttacked(e1,BLACK)=false, hasAnyLegalMove(WHITE)=true → InProgressState (status IN_PROGRESS)',
+    observerDetail:'ConsoleGameObserver.onMove: "[event] move played: BLACK PAWN e7-e5"',
+    evaluateEffect: function(){ state.turn = 'WHITE'; state.status = 'IN_PROGRESS'; },
+    result:'OK BLACK PAWN e7-e5 | turn now WHITE, status IN_PROGRESS', ok:true },
+  { kind:'accept', from:'g2', to:'g4', mover:'WHITE', pieceLabel:'Pawn',
+    label:'White plays g2 → g4', caption:'The second blunder — this is the one that loses.',
+    divider:'— MOVE g2 g4 —',
+    possibleMovesDetail:'Pawn.getPossibleMoves: direction=+1; oneForward g3 empty → add; hasMoved=false & twoForward g4 empty → add; diagonal f3 holds WHITE’s own pawn (same color) → skip; diagonal h3 empty → skip. moves=[g3, g4] → contains(g4) = true ✓',
+    isMoveLegalDetail:'board.isMoveLegal(piece, g4): simulate on a board copy — White king e1 not attacked afterward → true ✓',
+    promoDetail:'piece.getType()=PAWN, to.getRow()=3 (not 0 or 7) → returns null, no promotion',
+    moveDetail:'new Move(g2, g4, PAWN, WHITE, null, null) → "WHITE PAWN g2-g4"',
+    evaluateDetail:'currentTurn: WHITE → BLACK; GameState.evaluate(board, BLACK): isSquareAttacked(e8,WHITE)=false, hasAnyLegalMove(BLACK)=true → InProgressState (status IN_PROGRESS)',
+    observerDetail:'ConsoleGameObserver.onMove: "[event] move played: WHITE PAWN g2-g4" — the h4-e1 diagonal is now wide open',
+    evaluateEffect: function(){ state.turn = 'BLACK'; state.status = 'IN_PROGRESS'; },
+    result:'OK WHITE PAWN g2-g4 | turn now BLACK, status IN_PROGRESS', ok:true },
+  { kind:'accept', from:'d8', to:'h4', mover:'BLACK', pieceLabel:'Queen', mate:true,
+    label:'Black plays d8 → h4 — Fool’s Mate', caption:'The queen slides the full length of the open diagonal.',
+    divider:'— MOVE d8 h4 —',
+    possibleMovesDetail:'Queen.getPossibleMoves → SlidingPieceSupport.slide across 8 directions; the d8-e7-f6-g5-h4 diagonal is wide open (e7 vacated by e7-e5, f6/g5 empty) → h4 reachable. moves includes h4 → contains(h4) = true ✓',
+    isMoveLegalDetail:'board.isMoveLegal(piece, h4): simulate on a board copy — Black king e8 not attacked afterward → true ✓',
+    promoDetail:'piece.getType()=QUEEN ≠ PAWN → returns null immediately, no promotion',
+    moveDetail:'new Move(d8, h4, QUEEN, BLACK, null, null) → "BLACK QUEEN d8-h4"',
+    evaluateDetail:'currentTurn: BLACK → WHITE; GameState.evaluate(board, WHITE): isSquareAttacked(e1,BLACK) → true — queen on h4 attacks along the now fully-open h4-g3-f2-e1 diagonal (g3 vacated by g2-g4, f2 vacated by f2-f3); hasAnyLegalMove(WHITE) → false — no White move blocks the diagonal, captures the queen, or steps the king to safety → CheckmateState (status CHECKMATE)',
+    observerDetail:'notifyObservers: onMove → "[event] move played: BLACK QUEEN d8-h4"; status==CHECKMATE so onGameOver fires → "[event] CHECKMATE - BLACK wins"',
+    evaluateEffect: function(){ state.turn = 'WHITE'; state.status = 'CHECKMATE'; state.checkSq = 'e1'; state.winner = 'BLACK'; },
+    result:'OK BLACK QUEEN d8-h4 | turn now WHITE, status CHECKMATE', ok:true },
+  { kind:'reject-gameover', from:'a2', to:'a3', mover:'WHITE', pieceLabel:'Pawn',
+    label:'White tries a2 → a3', caption:'Edge case: the game is already over — does the guard hold?',
+    divider:'— MOVE a2 a3 (after CHECKMATE) —',
+    result:'ERROR GameOverException: Game is over (CHECKMATE); no more moves allowed', ok:false }
+];
+
+function buildStepsForAttempt(s){
+  if (s.kind === 'reject-empty') {
+    return [
+      { code:'Piece piece = board.getPiece(from);', detail:'from=' + s.from + ' → King(WHITE)' },
+      { code:'if (piece.getColor() != currentTurn) { throw ... }', detail:'piece.getColor()=WHITE == currentTurn=WHITE → condition false, continue' },
+      { code:'if (!piece.getPossibleMoves(board).contains(to)) {', detail:'King.getPossibleMoves(board): 3 of the 8 offset squares are off-board (row -1); the other 5 (d1, d2, e2, f1, f2) each already hold a White piece → moves = [] → contains(e2) = false' },
+      { code:'    throw new InvalidMoveException(piece.getType() + " cannot move from " + fromAlgebraic + " to " + toAlgebraic);',
+        detail:'ERROR InvalidMoveException: KING cannot move from e1 to e2', effect: rejectFlash(s.from, s.to) }
+    ];
+  }
+  if (s.kind === 'reject-turn') {
+    return [
+      { code:'Piece piece = board.getPiece(from);', detail:'from=' + s.from + ' → Pawn(BLACK)' },
+      { code:'if (piece.getColor() != currentTurn) {', detail:'piece.getColor()=BLACK, currentTurn=WHITE (still — the e1→e2 attempt above threw before ever flipping the turn) → condition true' },
+      { code:'    throw new InvalidMoveException("It is " + currentTurn + "\'s turn, not " + piece.getColor());',
+        detail:'ERROR InvalidMoveException: It is WHITE\'s turn, not BLACK', effect: rejectFlash(s.from, s.to) }
+    ];
+  }
+  if (s.kind === 'reject-gameover') {
+    return [
+      { code:'if (!currentState.allowsMove()) {', detail:'currentState = CheckmateState.INSTANCE (State pattern) → allowsMove() returns false → condition true' },
+      { code:'    throw new GameOverException("Game is over (" + currentState.getStatus() + "); no more moves allowed");',
+        detail:'ERROR GameOverException: Game is over (CHECKMATE); no more moves allowed', effect: rejectFlash(s.from, s.to) }
+    ];
+  }
+  // accept / accept+mate
+  return [
+    { code:'Piece piece = board.getPiece(from);', detail:'from=' + s.from + ' → ' + s.pieceLabel + '(' + s.mover + ')' },
+    { code:'piece.getPossibleMoves(board).contains(to)', detail: s.possibleMovesDetail },
+    { code:'board.isMoveLegal(piece, to)', detail: s.isMoveLegalDetail },
+    { code:'Piece captured = board.getPiece(to); board.removePiece(from); if (captured != null) board.removePiece(to); piece.setPosition(to); piece.setHasMoved(true); board.placePiece(piece, to);',
+      detail:'getPiece(' + s.to + ') → null, no capture; ' + s.pieceLabel.toLowerCase() + ' relocated ' + s.from + ' → ' + s.to + ', hasMoved=true',
+      effect: movePieceEffect(s.from, s.to) },
+    { code:'PieceType promotedTo = applyPromotionIfNeeded(piece, to, promotionChoice);', detail: s.promoDetail },
+    { code:'Move move = new Move(from, to, piece.getType(), currentTurn, capturedPieceType, promotedTo); moveHistory.add(move);', detail: s.moveDetail },
+    { code:'currentTurn = currentTurn.opposite(); currentState = GameState.evaluate(board, currentTurn);', detail: s.evaluateDetail, effect: s.evaluateEffect },
+    { code:'notifyObservers(move);', detail: s.observerDetail }
+  ];
+}
+
+function screenMoveAttempt(i){
+  if (i >= ATTEMPTS.length) { screenOutcome(); return; }
+  var spec = ATTEMPTS[i];
+  state.rejectSquares = null;
+  logDivider(spec.divider);
+  var steps = buildStepsForAttempt(spec), idx = 0;
+  render();
+  function render(){
+    var el = document.getElementById('stage');
+    el.innerHTML = '<h1>' + esc(spec.label) + '</h1><p class="stage-cap">' + esc(spec.caption) + '</p>' +
+      boardCardHTML() + '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s = steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx >= steps.length) {
+        logResult(spec.result, spec.ok);
+        setTimeout(function(){ screenMoveAttempt(i + 1); }, 350);
+      } else { render(); }
+    });
+  }
+}
+
+function screenOutcome(){
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Game over</h1><p class="stage-cap">Frozen by the State pattern — CheckmateState.allowsMove() = false.</p>' +
+    '<div class="outcome-banner mate">CHECKMATE — ' + state.winner + ' wins</div>' +
+    boardCardHTML() +
+    '<div class="actions"><button class="cta" id="again">Play again ↻</button></div>';
+  document.getElementById('again').addEventListener('click', function(){
+    state.board = makeEmptyBoard();
+    state.turn = 'WHITE';
+    state.status = 'IN_PROGRESS';
+    state.lastMove = null;
+    state.checkSq = null;
+    state.rejectSquares = null;
+    state.winner = null;
+    screenIntro();
+  });
+}
+
+screenIntro();
+})();
+</script>
+</body>
+</html>
