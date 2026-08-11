@@ -61,7 +61,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [x] ATM `[learning-mode]`
 
 ### Scheduling / Infra / Systems
-- [ ] Job Scheduler
+- [x] Job Scheduler `[learning-mode]`
 - [ ] Priority-Based CPU Job Scheduling Algorithm
 - [ ] InMemory Task Scheduler (run task at scheduled time)
 - [x] Calendar `[learning-mode]`
