@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ATM — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+    --lcd-bg:#132018; --lcd-ink:#7cf0a0; --lcd-dim:#3f6b52;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:820px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 18px; min-height:18px; }
+
+  .atm-screen { background:var(--lcd-bg); color:var(--lcd-ink); border-radius:10px; padding:12px 16px; margin:0 0 16px; font-size:13px; line-height:1.6; box-shadow:inset 0 0 0 2px var(--line-strong); }
+
+  .attempt-dots { display:flex; gap:6px; justify-content:center; margin:0 0 14px; }
+  .dot { width:10px; height:10px; border-radius:50%; background:var(--line-strong); }
+  .dot.used { background:var(--taken); }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:96px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); }
+  .choice-btn .avatar { width:32px; height:32px; border-radius:50%; background:var(--open-fill); border:1.5px solid var(--open); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; color:var(--ink); }
+
+  .note-row { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0; }
+  .note-tile { width:82px; padding:10px 8px; border-radius:10px; border:1.5px solid var(--line-strong); background:var(--paper); text-align:center; transition:all .3s; }
+  .note-tile .val { font-size:15px; font-weight:800; }
+  .note-tile .cnt { font-size:10.5px; color:var(--ink-dim); margin-top:2px; }
+  .note-tile .planned { font-size:10px; color:var(--amber-strong); font-weight:800; margin-top:3px; min-height:12px; }
+  .note-tile.hl { border-color:var(--amber); box-shadow:0 0 0 4px var(--amber-glow); transform:scale(1.06); }
+  .note-tile.zero { opacity:.55; }
+
+  .receipt-stub { width:220px; margin:10px auto; background:var(--paper); border:1.5px dashed var(--line-strong); border-radius:10px; padding:12px; text-align:center; }
+  .receipt-stub .tid { font-size:15px; font-weight:800; }
+  .receipt-stub .row { display:flex; justify-content:space-between; gap:10px; font-size:11px; color:var(--ink-dim); margin-top:4px; }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+
+  /* trace console */
+  .trace-card { max-height:640px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">ATM · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Setting up the machine…</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var DENOMS = [2000, 500, 200, 100];
+var WRONG_PIN_SEQUENCE = { ACC001:['9999'], ACC002:['0000','1111','2222'] };
+
+var state = {
+  accounts: {
+    ACC001: { accountNumber:'ACC001', pin:'1234', balance:5000, history:[] },
+    ACC002: { accountNumber:'ACC002', pin:'5678', balance:2000, history:[] }
+  },
+  cash: { 2000:5, 500:10, 200:10, 100:20 },
+  plannedBreakdown: {},
+  hlDenom: null,
+  atmStatus: 'IDLE',
+  pinAttempts: 0,
+  currentAccountNum: null,
+  sessionNum: 0
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function formatBreakdown(bd){
+  if (!bd) return '{}';
+  var parts = DENOMS.filter(function(d){ return bd[d]; }).map(function(d){ return bd[d] + 'x' + d; });
+  return parts.length ? '{' + parts.join(' ') + '}' : '{}';
+}
+function wrongPinFor(accountNum){
+  var seq = WRONG_PIN_SEQUENCE[accountNum];
+  return seq[Math.min(state.pinAttempts, seq.length - 1)];
+}
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+// ---------- live visual: ATM screen + cash tray ----------
+function renderScreenPanel(){
+  var lines;
+  if (state.atmStatus==='IDLE') lines=['INSERT CARD'];
+  else if (state.atmStatus==='CARD_INSERTED') lines=['ENTER PIN','Attempts used: '+state.pinAttempts+'/3'];
+  else if (state.atmStatus==='AUTHENTICATED') {
+    var a=state.accounts[state.currentAccountNum];
+    lines=['WELCOME '+state.currentAccountNum, 'Balance: $'+a.balance];
+  } else lines=['CARD RETAINED','SEE STAFF FOR ASSISTANCE'];
+  return '<div class="atm-screen mono">'+lines.map(esc).join('<br>')+'</div>';
+}
+function renderAttemptDots(){
+  var html='<div class="attempt-dots">';
+  for (var i=0;i<3;i++) html += '<span class="dot'+(i<state.pinAttempts?' used':'')+'"></span>';
+  return html+'</div>';
+}
+function renderCashRow(){
+  return '<div class="note-row">' + DENOMS.map(function(d){
+    var count = state.cash[d];
+    var planned = state.plannedBreakdown[d];
+    var cls = 'note-tile' + (d===state.hlDenom?' hl':'') + (count===0?' zero':'');
+    var plannedHtml = planned ? '<div class="planned">plan &minus;'+planned+'x</div>' : '<div class="planned">&nbsp;</div>';
+    return '<div class="'+cls+'"><div class="val mono">$'+d+'</div><div class="cnt mono">'+count+' notes</div>'+plannedHtml+'</div>';
+  }).join('') + '</div>';
+}
+
+// ---------- step builders ----------
+function buildInsertSteps(accountNum){
+  var account = state.accounts[accountNum];
+  return [
+    {code:'currentState.requireIdle();', detail:'status == IDLE ✓ (IdleState.requireIdle() is a no-op)'},
+    {code:'accountRepository.findByAccountNumber("'+accountNum+'");', detail:'found — balance=$'+account.balance},
+    {code:'currentState = currentState.insertCard();', detail:'IdleState.insertCard() → CardInsertedState.INSTANCE  (IDLE → CARD_INSERTED)',
+      effect:function(){ state.atmStatus='CARD_INSERTED'; }},
+    {code:'currentAccountNumber = "'+accountNum+'"; pinAttempts = 0;', detail:'session now bound to '+accountNum,
+      effect:function(){ state.currentAccountNum=accountNum; state.pinAttempts=0; }}
+  ];
+}
+
+function buildPinSteps(accountNum, correct){
+  var account = state.accounts[accountNum];
+  var enteredPin = correct ? account.pin : wrongPinFor(accountNum);
+  var steps = [];
+  steps.push({code:'currentState.requireCardInserted();', detail:'status == CARD_INSERTED ✓'});
+  steps.push({code:'Account account = accountRepository.findByAccountNumber("'+accountNum+'");', detail:'found — balance=$'+account.balance});
+  steps.push({code:'account.isPinCorrect("'+enteredPin+'");', detail:'"'+account.pin+'".equals("'+enteredPin+'") → '+correct});
+  var retained = false;
+  if (correct) {
+    steps.push({code:'currentState = currentState.authenticate();', detail:'CardInsertedState.authenticate() → AuthenticatedState.INSTANCE  (CARD_INSERTED → AUTHENTICATED)',
+      effect:function(){ state.atmStatus='AUTHENTICATED'; }});
+    steps.push({code:'pinAttempts = 0; return;', detail:'counter cleared — session authenticated',
+      effect:function(){ state.pinAttempts=0; }});
+  } else {
+    var newAttempts = state.pinAttempts + 1;
+    steps.push({code:'pinAttempts++;', detail:'pinAttempts now '+newAttempts+'/3',
+      effect:function(){ state.pinAttempts=newAttempts; }});
+    if (newAttempts >= 3) {
+      retained = true;
+      steps.push({code:'currentState = currentState.retainCard();', detail:'CardInsertedState.retainCard() → CardRetainedState.INSTANCE  (terminal — only resetMachine() escapes)',
+        effect:function(){ state.atmStatus='CARD_RETAINED'; }});
+      steps.push({code:'throw new InvalidPinException("Incorrect PIN entered 3 times; card retained");', detail:'ERROR — card held by the machine'});
+    } else {
+      steps.push({code:'throw new InvalidPinException("Incorrect PIN (attempt '+newAttempts+'/3)");', detail:'ERROR — session stays CARD_INSERTED, customer can retry'});
+    }
+  }
+  return {steps:steps, correct:correct, retained:retained};
+}
+
+function buildWithdrawSteps(accountNum, amount){
+  var account = state.accounts[accountNum];
+  var steps = [];
+  steps.push({code:'currentState.requireAuthenticated();', detail:'status == AUTHENTICATED ✓'});
+  steps.push({code:'TransactionCommand command = new WithdrawCommand(account, '+amount+', cashDispenser);', detail:'command object carries its own params — no type switch in AtmService'});
+  if (amount > account.balance) {
+    steps.push({code:'if (amount > account.getBalance()) throw new InsufficientFundsException(...);',
+      detail:'requested '+amount+', available '+account.balance+' → ERROR, dispenser never touched'});
+    return {steps:steps, outcome:'funds', amount:amount};
+  }
+  steps.push({code:'amount ('+amount+') <= account.getBalance() ('+account.balance+') ✓', detail:'proceeds to cashDispenser.dispense('+amount+')'});
+  steps.push({code:'Map<Integer,Integer> breakdown = cashDispenser.dispense('+amount+');', detail:'delegates to the Chain of Responsibility'});
+  steps.push({code:'DenominationHandler chainHead = buildChain();',
+    detail:'chain built largest→smallest from current inventory: '+DENOMS.map(function(d){ return d+':'+state.cash[d]; }).join(', '),
+    effect:function(){ state.plannedBreakdown={}; state.hlDenom=null; }});
+
+  var remaining = amount, breakdown = {}, outcome = 'success';
+  for (var i=0;i<DENOMS.length;i++){
+    var d = DENOMS[i], avail = state.cash[d];
+    var usable = Math.min(Math.floor(remaining/d), avail);
+    var covered = usable*d;
+    var remBefore = remaining;
+    (function(d, avail, usable, remBefore){
+      steps.push({code:'handler('+d+').plan('+remBefore+', breakdown);',
+        detail:'usable = min(floor('+remBefore+'/'+d+')='+Math.floor(remBefore/d)+', available='+avail+') = '+usable+(usable>0?' → breakdown['+d+']='+usable:' → contributes none'),
+        effect:function(){ state.hlDenom=d; if (usable>0) state.plannedBreakdown[d]=usable; }});
+    })(d, avail, usable, remBefore);
+    remaining -= covered;
+    if (usable>0) breakdown[d]=usable;
+    if (remaining===0){
+      steps.push({code:'remaining == 0 → plan() returns; chain stops here', detail:'full '+amount+' planned: '+formatBreakdown(breakdown)});
+      break;
+    }
+    if (i===DENOMS.length-1){
+      steps.push({code:'next == null → throw new InsufficientCashException("...remaining '+remaining+'");',
+        detail:'ERROR — exact change not possible; inventory NOT touched',
+        effect:function(){ state.plannedBreakdown={}; state.hlDenom=null; }});
+      outcome = 'cash';
+    }
+  }
+
+  if (outcome==='success'){
+    steps.push({code:'breakdown.forEach((d,c) -> notesByDenomination.merge(d, -c, Integer::sum));',
+      detail:'inventory committed: '+formatBreakdown(breakdown),
+      effect:function(){
+        DENOMS.forEach(function(d){ if (breakdown[d]) state.cash[d] -= breakdown[d]; });
+        state.plannedBreakdown={}; state.hlDenom=null;
+      }});
+    steps.push({code:'account.debit('+amount+');', detail:'balance $'+account.balance+' → $'+(account.balance-amount),
+      effect:function(){ account.balance -= amount; }});
+    steps.push({code:'return new TransactionReceipt(WITHDRAWAL, '+amount+', account.getBalance(), breakdown);',
+      detail:'receipt built — balanceAfter=$'+(account.balance-amount)});
+    steps.push({code:'currentAccount().addTransaction(receipt);',
+      detail:'history now has '+(account.history.length+1)+' entr'+(account.history.length+1===1?'y':'ies'),
+      effect:function(){ account.history.push({type:'WITHDRAWAL', amount:amount, balanceAfter:account.balance, breakdown:breakdown}); }});
+  }
+  return {steps:steps, outcome:outcome, amount:amount, breakdown:breakdown};
+}
+
+// ---------- screens ----------
+function screenPickAccount(){
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Pick a customer</h1><p class="stage-cap">Two accounts are already registered and the machine already has cash loaded — pick a card to insert.</p>' +
+    renderScreenPanel() +
+    '<div class="choice-row">' +
+    Object.keys(state.accounts).map(function(num){
+      var a = state.accounts[num];
+      return '<button class="choice-btn" data-a="'+num+'"><span class="avatar">'+num.slice(-2)+'</span><span class="label">'+num+'</span><span class="sub">balance $'+a.balance+'</span></button>';
+    }).join('') +
+    '</div>' +
+    renderCashRow();
+  Array.prototype.forEach.call(el.querySelectorAll('[data-a]'), function(b){
+    b.addEventListener('click', function(){ screenInsertSteps(b.getAttribute('data-a')); });
+  });
+}
+
+function screenInsertSteps(accountNum){
+  state.sessionNum++;
+  logDivider('— Session '+state.sessionNum+': '+accountNum+' —');
+  var steps = buildInsertSteps(accountNum), idx = 0;
+  render();
+  function render(){
+    var el = document.getElementById('stage');
+    el.innerHTML = '<h1>insertCard() executing</h1><p class="stage-cap">Tap through the real call chain.</p>' +
+      renderScreenPanel() + renderCashRow() +
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s = steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx >= steps.length) { setTimeout(function(){ screenPinAttempt(accountNum); }, 200); } else { render(); }
+    });
+  }
+}
+
+function screenPinAttempt(accountNum){
+  var account = state.accounts[accountNum];
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Enter PIN</h1><p class="stage-cap">'+accountNum+' — attempt '+(state.pinAttempts+1)+' of 3.</p>' +
+    renderScreenPanel() + renderAttemptDots() +
+    '<div class="choice-row">' +
+    '<button class="choice-btn" data-c="1"><span class="label">Correct PIN</span><span class="sub">'+account.pin+'</span></button>' +
+    '<button class="choice-btn" data-c="0"><span class="label">Wrong PIN</span><span class="sub">'+wrongPinFor(accountNum)+'</span></button>' +
+    '</div>' +
+    renderCashRow();
+  Array.prototype.forEach.call(el.querySelectorAll('[data-c]'), function(b){
+    b.addEventListener('click', function(){ screenPinSteps(accountNum, b.getAttribute('data-c')==='1'); });
+  });
+}
+
+function screenPinSteps(accountNum, correct){
+  var built = buildPinSteps(accountNum, correct);
+  var steps = built.steps, idx = 0;
+  render();
+  function render(){
+    var el = document.getElementById('stage');
+    el.innerHTML = '<h1>enterPin() executing</h1><p class="stage-cap">Tap through the real call chain.</p>' +
+      renderScreenPanel() + renderAttemptDots() + renderCashRow() +
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s = steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx >= steps.length) {
+        setTimeout(function(){
+          if (built.correct) screenWithdrawPick(accountNum);
+          else if (built.retained) screenCardRetained();
+          else screenPinAttempt(accountNum);
+        }, 200);
+      } else { render(); }
+    });
+  }
+}
+
+function screenCardRetained(){
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Card retained</h1><p class="stage-cap">Three wrong PINs — the machine will not release the card.</p>' +
+    renderScreenPanel() + renderCashRow() +
+    '<div class="actions"><button class="cta ghost" id="reset">Admin: resetMachine() →</button></div>';
+  document.getElementById('reset').addEventListener('click', function(){
+    logStep('atmService.resetMachine();', 'administrative override, not a state transition — currentState = IdleState.INSTANCE directly');
+    state.atmStatus='IDLE'; state.currentAccountNum=null; state.pinAttempts=0;
+    screenPickAccount();
+  });
+}
+
+function screenWithdrawPick(accountNum){
+  var account = state.accounts[accountNum];
+  var typical = accountNum==='ACC001' ? 3800 : 1900;
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Pick a withdrawal amount</h1><p class="stage-cap">'+accountNum+' — balance $'+account.balance+'.</p>' +
+    renderScreenPanel() +
+    '<div class="choice-row">' +
+    '<button class="choice-btn" data-amt="150"><span class="label">$150</span><span class="sub">tests exact change</span></button>' +
+    '<button class="choice-btn" data-amt="'+typical+'"><span class="label">$'+typical+'</span><span class="sub">typical withdrawal</span></button>' +
+    '<button class="choice-btn" data-amt="100000"><span class="label">$100000</span><span class="sub">exceeds balance</span></button>' +
+    '</div>' +
+    renderCashRow() +
+    '<div class="actions"><button class="cta ghost" id="eject-now">Eject card instead →</button></div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-amt]'), function(b){
+    b.addEventListener('click', function(){ screenWithdrawSteps(accountNum, parseInt(b.getAttribute('data-amt'),10)); });
+  });
+  document.getElementById('eject-now').addEventListener('click', function(){ doEject(accountNum); });
+}
+
+function screenWithdrawSteps(accountNum, amount){
+  var built = buildWithdrawSteps(accountNum, amount);
+  var steps = built.steps, idx = 0;
+  render();
+  function render(){
+    var el = document.getElementById('stage');
+    el.innerHTML = '<h1>withdraw('+amount+') executing</h1><p class="stage-cap">Tap through the real call chain.</p>' +
+      renderScreenPanel() + renderCashRow() +
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s = steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx >= steps.length) { setTimeout(function(){ screenWithdrawOutcome(accountNum, built); }, 200); } else { render(); }
+    });
+  }
+}
+
+function screenWithdrawOutcome(accountNum, built){
+  var account = state.accounts[accountNum];
+  var el = document.getElementById('stage');
+  var body;
+  if (built.outcome==='success'){
+    body = '<div class="receipt-stub"><div class="tid mono">WITHDRAWAL — $'+built.amount+'</div>' +
+      '<div class="row"><span>Dispensed</span><span class="mono">'+formatBreakdown(built.breakdown)+'</span></div>' +
+      '<div class="row"><span>New balance</span><span class="mono">$'+account.balance+'</span></div></div>';
+  } else if (built.outcome==='funds'){
+    body = '<div class="receipt-stub"><div class="tid mono">FAILED</div>' +
+      '<div class="row"><span>InsufficientFundsException</span></div>' +
+      '<div class="row"><span>requested $'+built.amount+' &gt; balance $'+account.balance+'</span></div></div>';
+  } else {
+    body = '<div class="receipt-stub"><div class="tid mono">FAILED</div>' +
+      '<div class="row"><span>InsufficientCashException</span></div>' +
+      '<div class="row"><span>exact change unavailable — inventory untouched</span></div></div>';
+  }
+  el.innerHTML = '<h1>'+(built.outcome==='success' ? 'Withdrawal complete' : 'Withdrawal failed')+'</h1><p class="stage-cap">'+accountNum+'</p>' +
+    renderScreenPanel() + body + renderCashRow() +
+    '<div class="actions"><button class="cta" id="again">Try another withdrawal →</button><button class="cta ghost" id="eject">Eject card →</button></div>';
+  document.getElementById('again').addEventListener('click', function(){ screenWithdrawPick(accountNum); });
+  document.getElementById('eject').addEventListener('click', function(){ doEject(accountNum); });
+}
+
+function doEject(accountNum){
+  logStep('currentState = currentState.ejectCard(); currentAccountNumber = null; pinAttempts = 0;',
+    'AuthenticatedState.ejectCard() → IdleState.INSTANCE  (AUTHENTICATED → IDLE)');
+  state.atmStatus='IDLE'; state.currentAccountNum=null; state.pinAttempts=0;
+  screenSettled(accountNum);
+}
+
+function screenSettled(accountNum){
+  var account = state.accounts[accountNum];
+  var last = account.history.length ? account.history[account.history.length-1] : null;
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Card ejected</h1><p class="stage-cap">Session with '+accountNum+' is over.</p>' +
+    renderScreenPanel() +
+    (last ?
+      '<div class="receipt-stub"><div class="tid mono">Last transaction</div>' +
+      '<div class="row"><span>'+last.type+'</span><span class="mono">$'+last.amount+'</span></div>' +
+      '<div class="row"><span>Dispensed</span><span class="mono">'+formatBreakdown(last.breakdown)+'</span></div>' +
+      '<div class="row"><span>Balance</span><span class="mono">$'+account.balance+'</span></div></div>'
+      : '<p class="stage-cap">No withdrawal completed this session.</p>') +
+    renderCashRow() +
+    '<div class="actions"><button class="cta" id="again">Start new session ↻</button></div>';
+  document.getElementById('again').addEventListener('click', screenPickAccount);
+}
+
+// ---------- boot: admin setup, exactly as test/input/scenario.txt ----------
+logDivider('— ATM setup —');
+logStep('atmService.registerAccount("ACC001", "1234", 5000);', 'account ACC001 registered, balance=$5000');
+logStep('atmService.registerAccount("ACC002", "5678", 2000);', 'account ACC002 registered, balance=$2000');
+logStep('atmService.loadCash(2000, 5);', 'loaded 5x $2000 notes');
+logStep('atmService.loadCash(500, 10);', 'loaded 10x $500 notes');
+logStep('atmService.loadCash(200, 10);', 'loaded 10x $200 notes');
+logStep('atmService.loadCash(100, 20);', 'loaded 20x $100 notes');
+screenPickAccount();
+})();
+</script>
+</body>
+</html>

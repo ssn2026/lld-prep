@@ -81,6 +81,10 @@ atm/
   diagrams/
     generate.py    Data-only script that builds atm.drawio via docs/tooling/drawio_uml.py
     atm.drawio     Class diagram + 3 sequence diagrams (auth, withdraw, PIN lockout/reset)
+  explainer/index.html   Interactive step-through: pick a customer, tap "Next step" to watch the real
+                          insertCard/enterPin State transitions (including 3-strikes lockout) and the
+                          withdraw Command + denomination Chain of Responsibility execute against a live
+                          cash-tray visual (open directly in a browser)
 ```
 
 ## Running it
