@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#4f86e6; --amber-strong:#3f70c9; --amber-glow:rgba(79,134,230,.5); --on-amber:#0d1424;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#6fa0f0; --amber-strong:#8bb3f5; --amber-glow:rgba(111,160,240,.45); --on-amber:#0d1424;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#6fa0f0; --amber-strong:#8bb3f5; --amber-glow:rgba(111,160,240,.45); --on-amber:#0d1424;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  h3 { margin:0 0 8px; font-size:12.5px; font-weight:800; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.06em; }
+  .wrap { max-width:1080px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:820px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 18px; min-height:18px; }
+  .stage-cap.error-cap { color:var(--taken); font-weight:700; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:120px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 8px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; text-align:center; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); text-align:center; }
+  .choice-btn svg { width:32px; height:32px; }
+
+  .lanes { display:flex; flex-direction:column; gap:8px; margin:14px 0; }
+  .lane-row { display:flex; align-items:flex-start; gap:8px; transition:all .3s; border-radius:8px; }
+  .lane-label { width:44px; flex:0 0 auto; font-size:10.5px; font-weight:800; color:var(--ink-faint); padding-top:6px; }
+  .pill-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .pill { padding:5px 9px; border-radius:8px; border:1.5px solid var(--open); background:var(--open-fill); font-size:10.5px; font-weight:700; color:var(--ink-dim); transition:all .3s; }
+  .pill i { font-style:normal; opacity:.7; margin-left:3px; }
+  .pill.hl { border-color:var(--amber); box-shadow:0 0 0 3px var(--amber-glow); transform:scale(1.05); }
+  .pill.redacted { border-color:var(--line-strong); background:var(--surface-2); color:var(--ink-faint); font-style:italic; }
+  .pill-empty { font-size:10.5px; color:var(--ink-faint); padding:5px 0; }
+
+  .proxy-cols { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:14px 0; }
+  @media (max-width:520px){ .proxy-cols{ grid-template-columns:1fr; } }
+  .proxy-col { border:1.5px solid var(--line-strong); border-radius:12px; padding:12px; min-height:80px; }
+  .proxy-col .pill-row { flex-direction:column; align-items:flex-start; }
+  .proxy-col .pill { width:100%; }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:14px; }
+
+  /* trace console */
+  .trace-card { max-height:640px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Calendar · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Pick an action on the left — every click logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+var USERS = ['alice','bob','carol','dave'];
+var USER_NAME = { alice:'Alice', bob:'Bob', carol:'Carol', dave:'Dave' };
+
+var state = {
+  calendars: { alice:[], bob:[], carol:[], dave:[] },
+  eventSeq: 1, seriesSeq: 1, opNum: 0
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function pad(n){ return String(n).length<2 ? '0'+n : String(n); }
+function fmtDT(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())+'T'+pad(d.getHours())+':'+pad(d.getMinutes()); }
+function fmtDate(d){ return pad(d.getMonth()+1)+'/'+pad(d.getDate()); }
+function fmtHM(d){ return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function durationLabel(ms){
+  var mins = ms/60000;
+  if (mins < 60) return 'PT'+mins+'M';
+  var h = Math.floor(mins/60), m = mins%60;
+  return 'PT'+h+'H'+(m ? m+'M' : '');
+}
+function plusDays(d,n){ var r=new Date(d.getTime()); r.setDate(r.getDate()+n); return r; }
+function plusWeeks(d,n){ return plusDays(d, n*7); }
+
+function generateStarts(type, firstStart, count){
+  if (type==='NONE') return [firstStart];
+  var starts=[];
+  for (var i=0;i<count;i++){
+    starts.push(type==='DAILY' ? plusDays(firstStart,i) : plusWeeks(firstStart,i));
+  }
+  return starts;
+}
+function hasConflict(events, start, end){
+  return events.some(function(e){ return start < e.end && e.start < end; });
+}
+function selfOverlapCheck(starts, durMs){
+  for (var i=0;i<starts.length;i++){
+    var aS=starts[i], aE=new Date(aS.getTime()+durMs);
+    for (var j=i+1;j<starts.length;j++){
+      var bS=starts[j], bE=new Date(bS.getTime()+durMs);
+      if (aS<bE && bS<aE) return {i:i,j:j};
+    }
+  }
+  return null;
+}
+
+// ---------- presets (real scenario values, see calendar/test/input/scenario.txt) ----------
+function presetStandup(){
+  return { ownerId:'alice', ownerName:'Alice', attendeeIds:['bob','carol'], attendeeNames:['Bob','Carol'],
+    title:'Standup', start:new Date(2026,7,10,9,0), end:new Date(2026,7,10,9,30), recurrenceType:'DAILY', occurrenceCount:3 };
+}
+function presetWeekly(){
+  return { ownerId:'bob', ownerName:'Bob', attendeeIds:['alice'], attendeeNames:['Alice'],
+    title:'Weekly 1:1', start:new Date(2026,7,14,14,0), end:new Date(2026,7,14,14,30), recurrenceType:'WEEKLY', occurrenceCount:2 };
+}
+function presetLunch(){
+  return { ownerId:'bob', ownerName:'Bob', attendeeIds:[], attendeeNames:[],
+    title:'Lunch', start:new Date(2026,7,11,9,15), end:new Date(2026,7,11,9,45), recurrenceType:'NONE', occurrenceCount:1 };
+}
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine).replace(/\n/g,'<br>')+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+// ---------- glyphs ----------
+function repeatG(){return '<svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 16 A12 12 0 0 1 34 12"/><polyline points="34,6 34,14 26,14"/><path d="M34 28 A12 12 0 0 1 10 32"/><polyline points="10,38 10,30 18,30"/></svg>';}
+function calPlusG(){return '<svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="8" width="32" height="30" rx="4"/><line x1="6" y1="17" x2="38" y2="17"/><line x1="14" y1="4" x2="14" y2="12"/><line x1="30" y1="4" x2="30" y2="12"/><line x1="22" y1="23" x2="22" y2="33"/><line x1="17" y1="28" x2="27" y2="28"/></svg>';}
+function eyeG(){return '<svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22 C10 12 34 12 40 22 C34 32 10 32 4 22 Z"/><circle cx="22" cy="22" r="5"/></svg>';}
+function clashG(){return '<svg viewBox="0 0 44 44" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="10" width="14" height="14" rx="2"/><rect x="24" y="20" width="14" height="14" rx="2"/><line x1="16" y1="16" x2="32" y2="32"/></svg>';}
+
+// ---------- lanes visual (live view of every user's real calendar) ----------
+function renderLanesHTML(){
+  return USERS.map(function(u){
+    var events = state.calendars[u].slice().sort(function(a,b){ return a.start-b.start; });
+    var pills = events.length ? events.map(function(e){
+      var cls = 'pill'+(state.justAdded && state.justAdded.indexOf(e.eventId)!==-1 ? ' hl' : '');
+      return '<span class="'+cls+'">'+esc(fmtDate(e.start))+' '+esc(fmtHM(e.start))+'–'+esc(fmtHM(e.end))+' '+esc(e.title)+
+        (e.seriesId ? '<i>·'+esc(e.seriesId)+'</i>' : '')+'</span>';
+    }).join('') : '<span class="pill-empty">— free —</span>';
+    return '<div class="lane-row" data-user="'+u+'"><span class="lane-label mono">'+USER_NAME[u]+'</span><div class="pill-row">'+pills+'</div></div>';
+  }).join('');
+}
+function updateLanes(){
+  var el = document.getElementById('lanes');
+  if (el) el.innerHTML = renderLanesHTML();
+}
+
+// ---------- createEvent() step builder (mirrors services/CalendarService.java exactly) ----------
+function buildCreateEventSteps(preset){
+  var participants = preset.attendeeIds.concat([preset.ownerId]);
+  var steps = [];
+
+  steps.push({
+    code: 'Set<String> participants = new LinkedHashSet<>(attendeeIds); participants.add(ownerId);',
+    detail: 'participants = {'+participants.join(', ')+'}'
+  });
+  steps.push({
+    code: 'for (String participantId : participants) userRepository.findByUserId(participantId);',
+    detail: participants.map(function(p){ return p+' ✓'; }).join('  ')+' — all registered'
+  });
+
+  var STRAT_CLASS = { NONE:'SingleOccurrenceStrategy', DAILY:'DailyRecurrenceStrategy', WEEKLY:'WeeklyRecurrenceStrategy', MONTHLY:'MonthlyRecurrenceStrategy' };
+  var starts = generateStarts(preset.recurrenceType, preset.start, preset.occurrenceCount);
+  steps.push({
+    code: 'RecurrenceStrategy strategy = resolveStrategy('+preset.recurrenceType+'); // → '+STRAT_CLASS[preset.recurrenceType]+'\nList<LocalDateTime> occurrenceStarts = strategy.generateStartTimes(start, '+preset.occurrenceCount+');',
+    detail: starts.map(fmtDT).join(', ')
+  });
+
+  var durMs = preset.end.getTime() - preset.start.getTime();
+  steps.push({
+    code: 'Duration duration = Duration.between(start, end);',
+    detail: 'duration = '+durationLabel(durMs)+'  ('+fmtHM(preset.start)+' → '+fmtHM(preset.end)+')'
+  });
+
+  var overlap = selfOverlapCheck(starts, durMs);
+  steps.push({
+    code: 'requireOccurrencesDontOverlapEachOther(occurrenceStarts, duration);',
+    detail: overlap
+      ? 'occurrence '+(overlap.i+1)+' and occurrence '+(overlap.j+1)+' overlap → throws InvalidEventException'
+      : (starts.length<2 ? '1 occurrence — nothing to compare, check trivially passes' : starts.length+' occurrences checked pairwise — none overlap ✓')
+  });
+  if (overlap){
+    steps.push({
+      code: 'throw new InvalidEventException("Recurring occurrences overlap each other (duration exceeds recurrence interval)");',
+      detail: 'createEvent() aborts before touching any calendar'
+    });
+    return { steps:steps, aborted:true, reason:'overlap' };
+  }
+
+  var conflict = null, checkLines = [];
+  for (var oi=0; oi<starts.length && !conflict; oi++){
+    var s = starts[oi], e = new Date(s.getTime()+durMs);
+    var results = [];
+    for (var pi=0; pi<participants.length; pi++){
+      var p = participants[pi];
+      if (hasConflict(state.calendars[p], s, e)){
+        conflict = { participant:p, start:s, end:e };
+        results.push(p+'✗ CONFLICT');
+        break;
+      }
+      results.push(p+'✓');
+    }
+    checkLines.push(fmtDate(s)+' '+fmtHM(s)+'-'+fmtHM(e)+': '+results.join(' '));
+  }
+  steps.push({
+    code: 'for (occurrenceStart : occurrenceStarts)\n  for (participantId : participants)\n    if (calendarRepository.findByOwnerId(participantId).hasConflict(occurrenceStart, occurrenceEnd)) throw ...',
+    detail: checkLines.join('   |   ')
+  });
+  if (conflict){
+    steps.push({
+      code: 'throw new EventConflictException("Event conflicts with an existing event on '+conflict.participant+'\'s calendar at '+fmtDT(conflict.start)+'");',
+      detail: 'createEvent() aborts — none of the '+starts.length+' occurrence(s) saved (plan-then-commit)'
+    });
+    return { steps:steps, aborted:true, reason:'conflict', conflict:conflict };
+  }
+
+  var seriesId = preset.recurrenceType==='NONE' ? null : 'SERIES'+state.seriesSeq;
+  steps.push({
+    code: 'String seriesId = recurrenceType == NONE ? null : "SERIES" + seriesSequence.getAndIncrement();',
+    detail: seriesId ? seriesId+' (shared by all '+starts.length+' occurrence(s))' : 'null — one-off event, no series'
+  });
+
+  var events = starts.map(function(s,i){
+    return { eventId:'E'+(state.eventSeq+i), title:preset.title, description:null,
+      start:s, end:new Date(s.getTime()+durMs), ownerId:preset.ownerId, attendeeIds:preset.attendeeIds.slice(), seriesId:seriesId };
+  });
+  steps.push({
+    code: 'occurrences.add(new Event("E"+eventSequence.getAndIncrement(), title, description, occurrenceStart, occurrenceEnd, ownerId, attendeeIds, seriesId));',
+    detail: events.map(function(ev){ return ev.eventId; }).join(', ')+' constructed — not yet saved to any calendar'
+  });
+
+  steps.push({
+    code: 'for (Event event : occurrences) {\n  eventRepository.save(event);\n  for (participantId : participants) calendarRepository.findByOwnerId(participantId).addEvent(event);\n}',
+    detail: events.length+' event(s) × '+participants.length+' participant(s) = '+(events.length*participants.length)+' addEvent() calls — committed to '+participants.join(', '),
+    effect: function(){
+      events.forEach(function(ev){ participants.forEach(function(p){ state.calendars[p].push(ev); }); });
+      state.eventSeq += events.length;
+      if (seriesId) state.seriesSeq++;
+      state.justAdded = events.map(function(ev){ return ev.eventId; });
+      updateLanes();
+      setTimeout(function(){ state.justAdded = null; updateLanes(); }, 900);
+    }
+  });
+
+  return { steps:steps, aborted:false, events:events, participants:participants };
+}
+
+// ---------- viewCalendar() step builder (mirrors services/CalendarService.java + proxy/RestrictedCalendarProxy.java) ----------
+function computeRows(viewerId){
+  var events = state.calendars['alice'].slice().sort(function(a,b){ return a.start-b.start; });
+  return events.map(function(e){
+    var visible = viewerId===e.ownerId || e.attendeeIds.indexOf(viewerId)!==-1;
+    return { e:e, visible:visible };
+  });
+}
+function buildViewBlocks(){
+  var viewers = [ {id:'carol', label:'Carol (attendee)'}, {id:'dave', label:'Dave (non-attendee)'} ];
+  var eventCount = state.calendars['alice'].length;
+  return viewers.map(function(v){
+    var rows = computeRows(v.id);
+    var steps = [];
+    steps.push({ code:'userRepository.findByUserId("'+v.id+'");', detail: v.id+' ✓ registered' });
+    steps.push({ code:'Calendar calendar = calendarRepository.findByOwnerId("alice");', detail: eventCount+' event(s) on alice\'s real calendar' });
+    steps.push({ code:'CalendarComponent view = new RestrictedCalendarProxy(calendar, "'+v.id+'");', detail:'proxy wraps the real Calendar; viewerId="'+v.id+'" captured' });
+    steps.push({
+      code: 'return view.getEvents(rangeStart, rangeEnd);\n// canViewDetails(event): viewerId.equals(owner) || attendeeIds.contains(viewerId)',
+      detail: rows.length ? rows.map(function(r){ return r.e.eventId+'→'+(r.visible ? 'full detail' : 'redacted "Busy"'); }).join('; ') : '(no events)'
+    });
+    return { viewer:v, steps:steps };
+  });
+}
+function fillProxyCol(viewerId, rows){
+  var el = document.getElementById('proxy-col-'+viewerId);
+  if (!el) return;
+  el.innerHTML = rows.length ? rows.map(function(r){
+    var e = r.e;
+    return r.visible
+      ? '<span class="pill">'+esc(fmtDate(e.start))+' '+esc(fmtHM(e.start))+'–'+esc(fmtHM(e.end))+' '+esc(e.title)+'</span>'
+      : '<span class="pill redacted">'+esc(fmtDate(e.start))+' '+esc(fmtHM(e.start))+'–'+esc(fmtHM(e.end))+' Busy</span>';
+  }).join('') : '<span class="pill-empty">— no events —</span>';
+}
+function proxyColsHTML(){
+  return '<div class="proxy-cols">'+
+    '<div class="proxy-col"><h3>Carol — attendee</h3><div class="pill-row" id="proxy-col-carol"></div></div>'+
+    '<div class="proxy-col"><h3>Dave — non-attendee</h3><div class="pill-row" id="proxy-col-dave"></div></div>'+
+    '</div>';
+}
+
+// ---------- screens ----------
+function screenHub(){
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Calendar Service</h1><p class="stage-cap">4 users registered (Alice, Bob, Carol, Dave), each with an empty personal calendar to start. Pick an action.</p>'+
+    '<div class="choice-row">'+
+      '<button class="choice-btn" data-a="standup">'+repeatG()+'<span class="label">Schedule Standup</span><span class="sub">alice owns · DAILY ×3</span></button>'+
+      '<button class="choice-btn" data-a="weekly">'+calPlusG()+'<span class="label">Schedule Weekly 1:1</span><span class="sub">bob owns · WEEKLY ×2</span></button>'+
+      '<button class="choice-btn" data-a="view">'+eyeG()+'<span class="label">View Alice\'s calendar</span><span class="sub">attendee vs outsider</span></button>'+
+      '<button class="choice-btn" data-a="lunch">'+clashG()+'<span class="label">Book Bob\'s Lunch</span><span class="sub">conflict test</span></button>'+
+    '</div>'+
+    '<div id="lanes" class="lanes" style="margin-top:16px">'+renderLanesHTML()+'</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-a]'), function(b){
+    b.addEventListener('click', function(){
+      var a = b.getAttribute('data-a');
+      if (a==='standup') startCreate(presetStandup());
+      else if (a==='weekly') startCreate(presetWeekly());
+      else if (a==='lunch') startCreate(presetLunch());
+      else if (a==='view') startView();
+    });
+  });
+}
+
+function startCreate(preset){
+  state.opNum++;
+  var recurLabel = preset.recurrenceType==='NONE' ? 'NONE (one-off)' : preset.recurrenceType+' ×'+preset.occurrenceCount;
+  logDivider('— #'+state.opNum+': createEvent('+preset.ownerId+', "'+preset.title+'") —');
+  logStep('service.createEvent("'+preset.ownerId+'", "'+preset.title+'", null, start, end, {'+preset.attendeeIds.join(', ')+'}, '+preset.recurrenceType+', '+preset.occurrenceCount+');',
+    'start='+fmtDT(preset.start)+'  recurrence='+recurLabel);
+  screenCreateSteps(preset);
+}
+
+function screenCreateSteps(preset){
+  var built = buildCreateEventSteps(preset), idx = 0;
+  render();
+  function render(){
+    var el = document.getElementById('stage');
+    el.innerHTML = '<h1>Watch createEvent() run</h1><p class="stage-cap">'+esc(preset.ownerName)+' → '+
+      (preset.attendeeNames.length ? esc(preset.attendeeNames.join(', ')) : 'no attendees')+' · '+
+      esc(preset.title)+' '+esc(fmtHM(preset.start))+'–'+esc(fmtHM(preset.end))+'</p>'+
+      '<div id="lanes" class="lanes">'+renderLanesHTML()+'</div>'+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s = built.steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx >= built.steps.length){ setTimeout(function(){ screenCreateOutcome(built, preset); }, 250); }
+      else { render(); }
+    });
+  }
+}
+
+function screenCreateOutcome(built, preset){
+  var el = document.getElementById('stage');
+  if (!built.aborted){
+    var ids = built.events.map(function(e){ return e.eventId; }).join(', ');
+    el.innerHTML = '<h1>Created</h1><p class="stage-cap">'+built.events.length+' occurrence(s) saved: <span class="mono">'+esc(ids)+'</span> — committed to '+esc(built.participants.join(', '))+'</p>'+
+      '<div id="lanes" class="lanes">'+renderLanesHTML()+'</div>'+
+      '<div class="actions"><button class="cta" id="back">Back to hub ↻</button></div>';
+  } else {
+    var reason = built.reason==='conflict'
+      ? 'EventConflictException — conflicts with an existing event on '+built.conflict.participant+'\'s calendar at '+fmtDT(built.conflict.start)+'. Nothing was saved.'
+      : 'InvalidEventException — the recurring occurrences overlap each other. Nothing was saved.';
+    el.innerHTML = '<h1>Not created</h1><p class="stage-cap error-cap">'+esc(reason)+'</p>'+
+      '<div id="lanes" class="lanes">'+renderLanesHTML()+'</div>'+
+      '<div class="actions"><button class="cta" id="back">Back to hub ↻</button></div>';
+  }
+  document.getElementById('back').addEventListener('click', screenHub);
+}
+
+function startView(){
+  state.opNum++;
+  var blocks = buildViewBlocks();
+  logDivider('— #'+state.opNum+': viewCalendar(alice) —');
+  screenViewSteps(blocks);
+}
+
+function screenViewSteps(blocks){
+  var bi = 0, idx = 0, completed = [];
+  logDivider('as '+blocks[0].viewer.label);
+  render();
+  function render(){
+    var el = document.getElementById('stage');
+    el.innerHTML = '<h1>Watch viewCalendar() run</h1><p class="stage-cap">Alice\'s calendar, looked at through the same Proxy by two different people.</p>'+
+      proxyColsHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    completed.forEach(function(vid){ fillProxyCol(vid, computeRows(vid)); });
+    document.getElementById('next-step').addEventListener('click', function(){
+      var steps = blocks[bi].steps;
+      var s = steps[idx]; logStep(s.code, s.detail); idx++;
+      if (idx >= steps.length){
+        completed.push(blocks[bi].viewer.id);
+        bi++; idx = 0;
+        if (bi >= blocks.length){ setTimeout(screenViewOutcome, 250); return; }
+        logDivider('as '+blocks[bi].viewer.label);
+      }
+      render();
+    });
+  }
+}
+
+function screenViewOutcome(){
+  var el = document.getElementById('stage');
+  el.innerHTML = '<h1>Same events, two views</h1><p class="stage-cap">Proxy redaction: owner/attendee sees full detail, everyone else sees only "Busy" — timing is never hidden.</p>'+
+    proxyColsHTML()+
+    '<div class="actions"><button class="cta" id="back">Back to hub ↻</button></div>';
+  var events = state.calendars['alice'].slice().sort(function(a,b){ return a.start-b.start; });
+  fillProxyCol('carol', events.map(function(e){ return { e:e, visible: 'carol'===e.ownerId || e.attendeeIds.indexOf('carol')!==-1 }; }));
+  fillProxyCol('dave', events.map(function(e){ return { e:e, visible: 'dave'===e.ownerId || e.attendeeIds.indexOf('dave')!==-1 }; }));
+  document.getElementById('back').addEventListener('click', screenHub);
+}
+
+screenHub();
+})();
+</script>
+</body>
+</html>

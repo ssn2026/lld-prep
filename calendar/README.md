@@ -82,6 +82,10 @@ calendar/
   diagrams/
     generate.py       Data-only script that builds calendar.drawio via docs/tooling/drawio_uml.py
     calendar.drawio    Class diagram + 3 sequence diagrams (create event, view via proxy, nested group view)
+  explainer/index.html   Interactive step-through: schedule a recurring event and tap "Next step" to watch
+                          createEvent()'s Strategy expansion and plan-then-commit conflict check run, then
+                          compare an attendee's vs a non-attendee's Proxy-redacted view of the same calendar
+                          (open directly in a browser)
 ```
 
 ## Running it
