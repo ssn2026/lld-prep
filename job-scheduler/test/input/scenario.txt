@@ -1,0 +1,45 @@
+# Job Scheduler demo script
+# SCHEDULE <jobId> <PRINT|FAIL> <delayMillis> [intervalMillis]
+
+# --- One-time jobs ---
+SCHEDULE job1 PRINT 100
+SCHEDULE job2 PRINT 250
+STATUS job1
+WAIT 500
+LOG
+STATUS job1
+STATUS job2
+
+# --- A one-time job that fails: reschedule logic must not touch it again ---
+SCHEDULE job3 FAIL 100
+WAIT 300
+LOG
+STATUS job3
+
+# --- A recurring job: let it fire a few times ---
+SCHEDULE job4 PRINT 100 150
+WAIT 600
+LOG
+STATUS job4
+
+# --- Cancel the recurring job, confirm it stops producing new EXEC lines ---
+CANCEL job4
+WAIT 400
+LOG
+STATUS job4
+
+# --- Cancel a job well before it's due: should succeed and never fire ---
+SCHEDULE job5 PRINT 500
+CANCEL job5
+STATUS job5
+WAIT 700
+LOG
+
+# --- Duplicate job id: job1 already exists (and stays in the registry after completion) ---
+SCHEDULE job1 PRINT 100
+
+# --- Unknown job id errors ---
+CANCEL unknown-job
+STATUS unknown-job
+
+SHUTDOWN

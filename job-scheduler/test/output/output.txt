@@ -1,0 +1,69 @@
+> SCHEDULE job1 PRINT 100
+OK scheduled job1 (one-time)
+> SCHEDULE job2 PRINT 250
+OK scheduled job2 (one-time)
+> STATUS job1
+STATUS job1 -> SCHEDULED
+> WAIT 500
+OK waited 500ms
+> LOG
+LOG
+  [t+270ms] EXEC job1
+  [t+286ms] COMPLETED job1
+  [t+414ms] EXEC job2
+  [t+414ms] COMPLETED job2
+> STATUS job1
+STATUS job1 -> COMPLETED
+> STATUS job2
+STATUS job2 -> COMPLETED
+> SCHEDULE job3 FAIL 100
+OK scheduled job3 (one-time)
+> WAIT 300
+OK waited 300ms
+> LOG
+LOG
+  [t+865ms] FAILED job3 (simulated failure in job3)
+> STATUS job3
+STATUS job3 -> FAILED
+> SCHEDULE job4 PRINT 100 150
+OK scheduled job4 (recurring)
+> WAIT 600
+OK waited 600ms
+> LOG
+LOG
+  [t+1170ms] EXEC job4
+  [t+1171ms] COMPLETED job4
+  [t+1298ms] EXEC job4
+  [t+1299ms] COMPLETED job4
+  [t+1459ms] EXEC job4
+  [t+1463ms] COMPLETED job4
+  [t+1599ms] EXEC job4
+  [t+1599ms] COMPLETED job4
+> STATUS job4
+STATUS job4 -> SCHEDULED
+> CANCEL job4
+OK cancelled job4 before it ran
+> WAIT 400
+OK waited 400ms
+> LOG
+LOG
+> STATUS job4
+STATUS job4 -> CANCELLED
+> SCHEDULE job5 PRINT 500
+OK scheduled job5 (one-time)
+> CANCEL job5
+OK cancelled job5 before it ran
+> STATUS job5
+STATUS job5 -> CANCELLED
+> WAIT 700
+OK waited 700ms
+> LOG
+LOG
+> SCHEDULE job1 PRINT 100
+ERROR DuplicateJobIdException: A job is already registered with id: job1
+> CANCEL unknown-job
+ERROR JobNotFoundException: No job found with id: unknown-job
+> STATUS unknown-job
+ERROR JobNotFoundException: No job found with id: unknown-job
+> SHUTDOWN
+OK scheduler shut down

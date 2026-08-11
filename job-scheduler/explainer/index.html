@@ -1,0 +1,486 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Scheduler — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1120px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1.15fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 14px; min-height:18px; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:120px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 10px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; text-align:center; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn.picked { border-color:var(--amber); background:var(--open-fill); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); }
+  .choice-btn svg { width:30px; height:30px; }
+
+  .clock { display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:800; background:var(--surface-2); border:1px solid var(--line); border-radius:999px; padding:5px 12px; margin-bottom:14px; }
+  .clock svg { width:15px; height:15px; }
+
+  .section-label { font-size:10.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint); margin:14px 0 6px; }
+  .section-label:first-of-type { margin-top:0; }
+
+  .queue-list { display:flex; flex-direction:column; gap:6px; }
+  .queue-empty, .registry-empty { font-size:12.5px; color:var(--ink-faint); padding:8px 0; }
+  .qcard { display:flex; align-items:center; gap:8px; padding:8px 10px; border:1.5px solid var(--line-strong); border-radius:10px; background:var(--paper); font-size:11.5px; }
+  .qcard.next { border-color:var(--amber); background:var(--open-fill); }
+  .qcard.cancelled { opacity:.55; text-decoration:line-through; border-style:dashed; }
+  .qcard .qglyph { width:16px; height:16px; flex:none; color:var(--ink-dim); }
+  .qcard .qid { font-weight:800; }
+  .qcard .qtiming { color:var(--ink-dim); }
+  .qcard .qdue { margin-left:auto; color:var(--ink-dim); }
+  .qcard .qtag { font-size:9px; font-weight:800; color:var(--taken); }
+  .qcard.clickable { cursor:pointer; }
+  .qcard.clickable:hover { border-color:var(--amber); }
+
+  .workers-row { display:flex; gap:10px; }
+  .worker { flex:1; padding:10px; border:1.5px solid var(--line-strong); border-radius:10px; background:var(--paper); text-align:center; }
+  .worker.busy { border-color:var(--amber); background:var(--open-fill); }
+  .worker .wlabel { display:block; font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em; }
+  .worker .wjob { display:block; font-size:12.5px; font-weight:700; margin-top:3px; }
+
+  table.registry { width:100%; border-collapse:collapse; font-size:12px; }
+  table.registry th { text-align:left; font-size:9.5px; font-weight:800; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; padding:4px 6px; border-bottom:1px solid var(--line); }
+  table.registry td { padding:6px; border-bottom:1px solid var(--line); }
+  .status-pill { font-size:9.5px; font-weight:800; padding:2px 8px; border-radius:999px; }
+  .status-SCHEDULED { background:var(--surface-2); color:var(--ink-dim); }
+  .status-RUNNING { background:var(--amber-glow); color:var(--on-amber); }
+  .status-COMPLETED { background:var(--open-fill); color:var(--open); }
+  .status-FAILED { background:var(--taken-fill); color:var(--taken); }
+  .status-CANCELLED { background:var(--surface-2); color:var(--ink-faint); }
+
+  .listeners { display:flex; gap:8px; margin-top:4px; }
+  .listener-chip { font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:999px; border:1.5px solid var(--line-strong); color:var(--ink-dim); }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta:disabled { opacity:.4; cursor:not-allowed; }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+
+  /* trace console */
+  .trace-card { max-height:720px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Job Scheduler · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Schedule a job to start — every click below logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var TIMING_CHOICES = {
+  ONE_TIME_SHORT: {type:'ONE_TIME', delay:150, label:'One-time, in 150ms', sub:'fires once'},
+  ONE_TIME_LONG:  {type:'ONE_TIME', delay:400, label:'One-time, in 400ms', sub:'fires once'},
+  RECURRING:      {type:'RECURRING', delay:100, interval:150, label:'Recurring, every 150ms', sub:'starts at 100ms'}
+};
+var BEHAVIOR_CHOICES = {
+  PRINT: {label:'PRINT job', sub:'logs a line when it runs'},
+  FAIL:  {label:'FAIL job', sub:'throws an exception when it runs'}
+};
+
+var state = {
+  now: 0,
+  jobSeq: 0,
+  occSeq: 0,
+  occurrences: [],           // {jobId, seq, behavior, timing, dueAt, status, inQueue}
+  workers: [null, null],     // each slot: jobId or null
+  pendingJob: null           // {jobId, behavior} being built across the setup screens
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+// ---------- glyphs ----------
+function clockG(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>';}
+function printG(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>';}
+function failG(){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l10 18H2z"/><path d="M12 10v4"/><circle cx="12" cy="17" r="0.6" fill="currentColor"/></svg>';}
+
+// ---------- state helpers ----------
+function addOccurrence(jobId, behavior, timing, dueAt){
+  var occ = {jobId:jobId, seq:++state.occSeq, behavior:behavior, timing:timing, dueAt:dueAt, status:'SCHEDULED', inQueue:true};
+  state.occurrences.push(occ);
+  return occ;
+}
+function pendingSorted(){
+  return state.occurrences.filter(function(o){ return o.inQueue; })
+    .sort(function(a,b){ return (a.dueAt-b.dueAt) || (a.seq-b.seq); });
+}
+function latestByJob(){
+  var order=[], latest={};
+  state.occurrences.forEach(function(o){ if(!(o.jobId in latest)) order.push(o.jobId); latest[o.jobId]=o; });
+  return {order:order, latest:latest};
+}
+
+// ---------- shared render fragments ----------
+function renderClockHTML(){
+  return '<div class="clock mono">'+clockG()+' t = '+state.now+'ms</div>';
+}
+function renderQueueHTML(){
+  var pending = pendingSorted();
+  if (!pending.length) return '<div class="queue-empty">DelayQueue is empty — nothing waiting.</div>';
+  return '<div class="queue-list">'+pending.map(function(o,i){
+    var cls='qcard'+(o.status==='CANCELLED'?' cancelled':'')+(i===0?' next':'');
+    var timingLabel = o.timing.type==='RECURRING' ? ('↻ every '+o.timing.interval+'ms') : '1×';
+    return '<div class="'+cls+'">'+
+      '<span class="qglyph">'+(o.behavior==='FAIL'?failG():printG())+'</span>'+
+      '<span class="qid mono">'+esc(o.jobId)+'</span>'+
+      '<span class="qtiming">'+timingLabel+'</span>'+
+      '<span class="qdue mono">t+'+o.dueAt+'ms</span>'+
+      (o.status==='CANCELLED' ? '<span class="qtag">CANCELLED</span>' : '')+
+      '</div>';
+  }).join('')+'</div>';
+}
+function renderWorkersHTML(){
+  return '<div class="workers-row">'+state.workers.map(function(w,i){
+    return '<div class="worker'+(w?' busy':'')+'"><span class="wlabel">Worker '+(i+1)+'</span><span class="wjob mono">'+(w?esc(w):'idle')+'</span></div>';
+  }).join('')+'</div>';
+}
+function renderRegistryHTML(){
+  var lb = latestByJob();
+  if (!lb.order.length) return '<div class="registry-empty">No jobs scheduled yet.</div>';
+  return '<table class="registry"><thead><tr><th>Job</th><th>Trigger</th><th>Status</th></tr></thead><tbody>'+
+    lb.order.map(function(id){
+      var o = lb.latest[id];
+      var trig = (o.timing.type==='RECURRING' ? '↻ recurring' : 'one-time') + ' · ' + o.behavior;
+      return '<tr><td class="mono">'+esc(id)+'</td><td>'+trig+'</td>'+
+        '<td><span class="status-pill status-'+o.status+'">'+o.status+'</span></td></tr>';
+    }).join('')+'</tbody></table>';
+}
+
+// ---------- screens ----------
+function screenPickBehavior(){
+  state.jobSeq++;
+  state.pendingJob = { jobId: 'job-'+state.jobSeq };
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Schedule '+state.pendingJob.jobId+'</h1>'+
+    '<p class="stage-cap">What should this job do when it runs?</p>'+
+    renderClockHTML()+
+    '<div class="choice-row">'+
+    Object.keys(BEHAVIOR_CHOICES).map(function(k){
+      var c=BEHAVIOR_CHOICES[k];
+      return '<button class="choice-btn" data-b="'+k+'">'+(k==='FAIL'?failG():printG())+'<span class="label">'+c.label+'</span><span class="sub">'+c.sub+'</span></button>';
+    }).join('')+'</div>'+
+    '<div class="section-label">Currently in the DelayQueue</div>'+renderQueueHTML()+
+    '<div class="section-label">Registry</div>'+renderRegistryHTML();
+  Array.prototype.forEach.call(el.querySelectorAll('[data-b]'), function(b){
+    b.addEventListener('click', function(){
+      var behavior=b.getAttribute('data-b');
+      state.pendingJob.behavior=behavior;
+      logDivider('— Scheduling '+state.pendingJob.jobId+' —');
+      logStep('Job job = '+(behavior==='FAIL' ? '() -> { throw new RuntimeException("simulated failure"); };' : '() -> transcript.add("EXEC "+jobId);'),
+        behavior==='FAIL' ? 'a Job that always throws' : 'a Job that logs a line (the Command pattern -- just execute())');
+      screenPickTiming();
+    });
+  });
+}
+
+function screenPickTiming(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>When should it run?</h1><p class="stage-cap">Pick a Trigger (Strategy pattern).</p>'+
+    renderClockHTML()+
+    '<div class="choice-row">'+
+    Object.keys(TIMING_CHOICES).map(function(k){
+      var c=TIMING_CHOICES[k];
+      return '<button class="choice-btn" data-t="'+k+'"><span class="label">'+c.label+'</span><span class="sub">'+c.sub+'</span></button>';
+    }).join('')+'</div>'+
+    '<div class="section-label">Currently in the DelayQueue</div>'+renderQueueHTML()+
+    '<div class="section-label">Registry</div>'+renderRegistryHTML();
+  Array.prototype.forEach.call(el.querySelectorAll('[data-t]'), function(b){
+    b.addEventListener('click', function(){
+      var key=b.getAttribute('data-t'), timing=TIMING_CHOICES[key];
+      state.pendingJob.timing=timing;
+      var triggerLine = timing.type==='RECURRING'
+        ? 'Trigger trigger = new FixedRateTrigger('+timing.delay+', '+timing.interval+');'
+        : 'Trigger trigger = new OneTimeTrigger('+timing.delay+');';
+      logStep(triggerLine, timing.type==='RECURRING' ? 'isRecurring() -> true' : 'isRecurring() -> false');
+      screenScheduleSteps();
+    });
+  });
+}
+
+function buildScheduleSteps(){
+  var pj=state.pendingJob, timing=pj.timing, dueAt=null, occ=null;
+  var steps=[];
+  steps.push({
+    code:'long executionTime = trigger.firstExecutionTime(now);',
+    detail:'now = t+'+state.now+'ms, delay = '+timing.delay+'ms → executionTime = t+'+(state.now+timing.delay)+'ms',
+    effect:function(){ dueAt = state.now + timing.delay; }
+  });
+  steps.push({
+    code:'ScheduledTask task = new ScheduledTask("'+pj.jobId+'", job, trigger, executionTime);',
+    detail:'status = SCHEDULED  (AtomicReference, AtomicBoolean cancelRequested = false)'
+  });
+  steps.push({
+    code:'registry.register(task);',
+    detail:'ConcurrentHashMap: "'+pj.jobId+'" → SCHEDULED',
+    effect:function(){ occ = addOccurrence(pj.jobId, pj.behavior, timing, dueAt); }
+  });
+  steps.push({
+    code:'delayQueue.put(task);',
+    detail:'queue keeps itself sorted by due time — '+pj.jobId+' now due at t+'+dueAt+'ms',
+    effect:function(){ /* rendered on next screen */ }
+  });
+  return steps;
+}
+
+function screenScheduleSteps(){
+  var steps=buildScheduleSteps(), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>scheduleJob(...)</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderClockHTML()+
+      '<div class="section-label">DelayQueue</div>'+renderQueueHTML()+
+      '<div class="section-label">Registry</div>'+renderRegistryHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function buildDispatchSteps(occ){
+  var steps=[];
+  var wasCancelled = occ.status==='CANCELLED';
+  steps.push({
+    code:'ScheduledTask task = delayQueue.take();',
+    detail:'unblocks: earliest due = "'+occ.jobId+'" at t+'+occ.dueAt+'ms',
+    effect:function(){ state.now=occ.dueAt; occ.inQueue=false; }
+  });
+  steps.push({
+    code:'if (task.getStatus() == JobStatus.CANCELLED) { continue; }',
+    detail: wasCancelled
+      ? 'TRUE — skip straight back to take(); job.execute() never runs, no reschedule either'
+      : 'false — still pending, dispatcher proceeds'
+  });
+  if (wasCancelled) return steps;
+
+  var w = state.workers.indexOf(null);
+  steps.push({
+    code:'task.markRunning();',
+    detail:'status: SCHEDULED → RUNNING',
+    effect:function(){ occ.status='RUNNING'; }
+  });
+  steps.push({
+    code:'workerPool.submit(() -> runTask(task));',
+    detail:'worker-'+(w+1)+' picks it up; dispatcher loops back to take() immediately (not shown here for clarity)',
+    effect:function(){ state.workers[w]=occ.jobId; }
+  });
+  if (occ.behavior==='FAIL'){
+    steps.push({ code:'job.execute();  // throws', detail:'RuntimeException("simulated failure in '+occ.jobId+'")' });
+    steps.push({ code:'task.markFailed();', detail:'status: RUNNING → FAILED', effect:function(){ occ.status='FAILED'; } });
+    steps.push({ code:'notifyFailed("'+occ.jobId+'", error);', detail:'ConsoleJobListener + TranscriptListener both notified (Observer)' });
+  } else {
+    steps.push({ code:'job.execute();', detail:'appends "EXEC '+occ.jobId+'" to the transcript' });
+    steps.push({ code:'task.markCompleted();', detail:'status: RUNNING → COMPLETED', effect:function(){ occ.status='COMPLETED'; } });
+    steps.push({ code:'notifyCompleted("'+occ.jobId+'");', detail:'ConsoleJobListener + TranscriptListener both notified (Observer)' });
+  }
+  steps.push({
+    code:'// worker thread is free again',
+    detail:'worker-'+(w+1)+' → idle',
+    effect:function(){ state.workers[w]=null; }
+  });
+
+  if (occ.timing.type==='RECURRING'){
+    var nextDue = occ.dueAt + occ.timing.interval;
+    steps.push({
+      code:'long nextTime = trigger.nextExecutionTime(previousExecutionMillis);',
+      detail:'previous = '+occ.dueAt+' + interval = '+occ.timing.interval+' → '+nextDue
+    });
+    steps.push({
+      code:'ScheduledTask nextTask = task.withNextExecution(nextTime);',
+      detail:'a BRAND-NEW ScheduledTask — same jobId, fresh status/cancelRequested (never mutate the one that just ran)'
+    });
+    steps.push({
+      code:'registry.register(nextTask);',
+      detail:'"'+occ.jobId+'" → SCHEDULED again, overwriting the finished occurrence',
+      effect:function(){ addOccurrence(occ.jobId, occ.behavior, occ.timing, nextDue); }
+    });
+    steps.push({
+      code:'delayQueue.put(nextTask);',
+      detail:'back in the queue, due at t+'+nextDue+'ms'
+    });
+  } else {
+    steps.push({ code:'// one-time job — isRecurring() is false', detail:occ.jobId+' stays '+occ.status+' forever (until the registry is cleared)' });
+  }
+  return steps;
+}
+
+function screenDispatchSteps(occ){
+  var steps=buildDispatchSteps(occ), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>Dispatch: '+esc(occ.jobId)+'</h1>'+
+      '<p class="stage-cap">One job at a time for clarity — in the real system, both workers can be mid-job simultaneously.</p>'+
+      renderClockHTML()+
+      '<div class="section-label">DelayQueue</div>'+renderQueueHTML()+
+      '<div class="section-label">Worker pool</div>'+renderWorkersHTML()+
+      '<div class="section-label">Registry</div>'+renderRegistryHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function buildCancelSteps(occ){
+  return [
+    { code:'ScheduledTask task = registry.findByJobId("'+occ.jobId+'");', detail:'O(1) ConcurrentHashMap lookup → the current pending occurrence' },
+    { code:'task.cancel();', detail:'cancelRequested.set(true)   // stops any future recurrence too' },
+    { code:'status.compareAndSet(JobStatus.SCHEDULED, JobStatus.CANCELLED);', detail:'succeeds — it hadn’t started running yet',
+      effect:function(){ occ.status='CANCELLED'; } },
+    { code:'return true;', detail:'cancelJob("'+occ.jobId+'") → true (stopped before it ran)' }
+  ];
+}
+
+function screenCancelSteps(occ){
+  var steps=buildCancelSteps(occ), idx=0;
+  logDivider('— Cancelling '+occ.jobId+' —');
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>cancelJob("'+esc(occ.jobId)+'")</h1>'+
+      '<p class="stage-cap">Lazy cancellation — watch the card stay in the queue.</p>'+
+      renderClockHTML()+
+      '<div class="section-label">DelayQueue</div>'+renderQueueHTML()+
+      '<div class="section-label">Registry</div>'+renderRegistryHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function screenPickCancelTarget(){
+  var cancellable = state.occurrences.filter(function(o){ return o.inQueue && o.status==='SCHEDULED'; });
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Cancel which job?</h1><p class="stage-cap">Only jobs still waiting (not yet dispatched) can be cancelled.</p>'+
+    renderClockHTML()+
+    '<div class="queue-list" id="cancel-list"></div>'+
+    '<div class="actions"><button class="cta ghost" id="back">← Back</button></div>';
+  var list=document.getElementById('cancel-list');
+  if (!cancellable.length){
+    list.innerHTML='<div class="queue-empty">Nothing cancellable right now.</div>';
+  } else {
+    cancellable.sort(function(a,b){ return a.dueAt-b.dueAt; }).forEach(function(o){
+      var d=document.createElement('div');
+      d.className='qcard clickable';
+      d.innerHTML='<span class="qglyph">'+(o.behavior==='FAIL'?failG():printG())+'</span>'+
+        '<span class="qid mono">'+esc(o.jobId)+'</span><span class="qdue mono">t+'+o.dueAt+'ms</span>';
+      d.addEventListener('click', function(){ screenCancelSteps(o); });
+      list.appendChild(d);
+    });
+  }
+  document.getElementById('back').addEventListener('click', screenControlRoom);
+}
+
+function screenControlRoom(){
+  var pending = pendingSorted();
+  var next = pending[0];
+  var cancellableCount = state.occurrences.filter(function(o){ return o.inQueue && o.status==='SCHEDULED'; }).length;
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Control room</h1><p class="stage-cap">JobSchedulerService’s internals, live.</p>'+
+    renderClockHTML()+
+    '<div class="section-label">DelayQueue '+(next?'(next due: '+esc(next.jobId)+' @ t+'+next.dueAt+'ms)':'')+'</div>'+renderQueueHTML()+
+    '<div class="section-label">Worker pool</div>'+renderWorkersHTML()+
+    '<div class="section-label">Registry</div>'+renderRegistryHTML()+
+    '<div class="actions">'+
+      '<button class="cta" id="schedule">Schedule another job →</button>'+
+      '<button class="cta" id="advance"'+(pending.length?'':' disabled')+'>Advance to next due →</button>'+
+      '<button class="cta ghost" id="cancel"'+(cancellableCount?'':' disabled')+'>Cancel a pending job →</button>'+
+      '<button class="cta ghost" id="reset">Reset simulation ↻</button>'+
+    '</div>';
+  document.getElementById('schedule').addEventListener('click', screenPickBehavior);
+  if (pending.length) document.getElementById('advance').addEventListener('click', function(){ screenDispatchSteps(next); });
+  if (cancellableCount) document.getElementById('cancel').addEventListener('click', screenPickCancelTarget);
+  document.getElementById('reset').addEventListener('click', function(){
+    state.now=0; state.jobSeq=0; state.occSeq=0; state.occurrences=[]; state.workers=[null,null]; state.pendingJob=null;
+    document.getElementById('trace-log').innerHTML='<div class="trace-empty">Schedule a job to start — every click below logs the real method call it triggers.</div>';
+    screenPickBehavior();
+  });
+}
+
+screenPickBehavior();
+})();
+</script>
+</body>
+</html>
