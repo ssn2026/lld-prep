@@ -15,6 +15,7 @@ OK ball recorded: RUN 4
 > BALL RUN 1
 OK ball recorded: RUN 1
 > BALL WICKET
+  [listener] WICKET! India 1 down, 5 runs
 OK ball recorded: WICKET
 > BALL RUN 2
 OK ball recorded: RUN 2
@@ -31,12 +32,14 @@ OK ball recorded: RUN 1
 > BALL RUN 4
 OK ball recorded: RUN 4
 > BALL WICKET
+  [listener] WICKET! India 2 down, 20 runs
 OK ball recorded: WICKET
 > BALL RUN 2
 OK ball recorded: RUN 2
 > BALL RUN 1
 OK ball recorded: RUN 1
 > BALL RUN 0
+  [listener] innings complete: India 23/2 (2.0 overs)
 OK ball recorded: RUN 0
 > SCORECARD
 SCORECARD
@@ -51,6 +54,8 @@ OK ball recorded: RUN 6
 > BALL RUN 6
 OK ball recorded: RUN 6
 > BALL RUN 6
+  [listener] innings complete: Australia 24/0 (0.4 overs)
+  [listener] match complete: Australia won by 10 wicket(s)
 OK ball recorded: RUN 6
 > SCORECARD
 SCORECARD

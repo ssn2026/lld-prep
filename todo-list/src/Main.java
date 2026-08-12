@@ -6,7 +6,9 @@ import java.nio.file.Path;
 import java.util.List;
 import model.Task;
 import model.TaskPriority;
+import model.TaskStatus;
 import observer.ConsoleTaskListener;
+import observer.TaskListener;
 import services.TodoListService;
 import strategy.CreatedOrderSortStrategy;
 import strategy.DueDateSortStrategy;
@@ -29,6 +31,7 @@ public class Main {
 
         TodoListService service = new TodoListService();
         service.addListener(new ConsoleTaskListener());
+        service.addListener(new TranscriptTaskListener(output));
 
         List<String> lines = Files.readAllLines(inputPath);
         for (String rawLine : lines) {
@@ -36,8 +39,8 @@ public class Main {
             if (line.isEmpty() || line.startsWith("#")) {
                 continue;
             }
-            String result = execute(service, line);
             log(output, "> " + line);
+            String result = execute(service, line);
             log(output, result);
         }
 
@@ -110,5 +113,19 @@ public class Main {
                     .append(" dueInDays=").append(task.getDueInDays()).append('\n');
         }
         return sb.toString().stripTrailing();
+    }
+
+    /** Feeds listener events into the same captured transcript as everything else, not just stdout. */
+    private static class TranscriptTaskListener implements TaskListener {
+        private final StringBuilder output;
+
+        TranscriptTaskListener(StringBuilder output) {
+            this.output = output;
+        }
+
+        @Override
+        public void onStatusChanged(String taskId, TaskStatus from, TaskStatus to) {
+            log(output, "  [listener] " + taskId + ": " + from + " -> " + to);
+        }
     }
 }

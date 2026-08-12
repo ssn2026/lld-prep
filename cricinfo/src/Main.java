@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import observer.ConsoleMatchListener;
+import observer.MatchListener;
 import services.CricInfoService;
 
 /**
@@ -24,6 +25,7 @@ public class Main {
 
         CricInfoService service = new CricInfoService();
         service.addListener(new ConsoleMatchListener());
+        service.addListener(new TranscriptMatchListener(output));
 
         List<String> lines = Files.readAllLines(inputPath);
         for (String rawLine : lines) {
@@ -93,4 +95,28 @@ public class Main {
 
     private static String teamAName;
     private static List<String> teamAPlayers;
+
+    /** Feeds listener events into the same captured transcript as everything else, not just stdout. */
+    private static class TranscriptMatchListener implements MatchListener {
+        private final StringBuilder output;
+
+        TranscriptMatchListener(StringBuilder output) {
+            this.output = output;
+        }
+
+        @Override
+        public void onWicketFallen(String battingTeam, int wickets, int runs) {
+            log(output, "  [listener] WICKET! " + battingTeam + " " + wickets + " down, " + runs + " runs");
+        }
+
+        @Override
+        public void onInningsComplete(String battingTeam, int runs, int wickets, String overs) {
+            log(output, "  [listener] innings complete: " + battingTeam + " " + runs + "/" + wickets + " (" + overs + " overs)");
+        }
+
+        @Override
+        public void onMatchComplete(String resultSummary) {
+            log(output, "  [listener] match complete: " + resultSummary);
+        }
+    }
 }

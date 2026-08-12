@@ -10,16 +10,22 @@ LIST (CREATED)
   T2 [TODO] FileTaxes priority=HIGH dueInDays=5
   T3 [TODO] ReadBook priority=LOW dueInDays=30
 > START T1
+  [listener] T1: TODO -> IN_PROGRESS
 OK T1 -> IN_PROGRESS
 > COMPLETE T1
+  [listener] T1: IN_PROGRESS -> DONE
 OK T1 -> DONE
 > ARCHIVE T1
+  [listener] T1: DONE -> ARCHIVED
 OK T1 -> ARCHIVED
 > COMPLETE T2
+  [listener] T2: TODO -> DONE
 OK T2 -> DONE
 > REOPEN T2
+  [listener] T2: DONE -> TODO
 OK T2 -> TODO
 > START T2
+  [listener] T2: TODO -> IN_PROGRESS
 OK T2 -> IN_PROGRESS
 > LIST PRIORITY
 LIST (PRIORITY)
@@ -38,6 +44,7 @@ ERROR InvalidTaskTransitionException: Cannot reopen a task that is TODO
 > ARCHIVE T3
 ERROR InvalidTaskTransitionException: Cannot archive a task that is TODO
 > COMPLETE T3
+  [listener] T3: TODO -> DONE
 OK T3 -> DONE
 > DELETE T3
 OK deleted T3
