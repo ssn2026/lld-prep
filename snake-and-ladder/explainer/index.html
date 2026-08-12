@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snake &amp; Ladder — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1180px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1.2fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:900px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 14px; min-height:18px; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 10px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; text-align:center; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); }
+
+  .section-label { font-size:10.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint); margin:14px 0 6px; }
+  .section-label:first-of-type { margin-top:0; }
+
+  .board-grid { display:grid; grid-template-columns:repeat(10, 1fr); gap:2px; background:var(--line); border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .cell { position:relative; background:var(--surface-2); aspect-ratio:1; display:flex; align-items:flex-start; justify-content:flex-start; padding:2px 3px; font-size:8px; color:var(--ink-faint); font-weight:700; }
+  .cell.snake-head { background:var(--taken-fill); color:var(--taken); }
+  .cell.ladder-bottom { background:var(--open-fill); color:var(--open); }
+  .cell .tokens { position:absolute; bottom:1px; right:2px; left:2px; display:flex; gap:1px; justify-content:flex-end; flex-wrap:wrap; }
+  .token { width:11px; height:11px; border-radius:50%; font-size:7px; display:flex; align-items:center; justify-content:center; font-weight:800; color:#fff; }
+  .token.p0 { background:var(--amber-strong); }
+  .token.p1 { background:#4a7fd6; }
+  .token.p2 { background:#8a5fc9; }
+
+  .status-row { display:flex; gap:8px; flex-wrap:wrap; margin:10px 0; }
+  .status-chip { padding:5px 12px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line); font-size:11.5px; font-weight:700; color:var(--ink-dim); }
+  .status-chip.turn { border-color:var(--amber); color:var(--ink); }
+  .winner-banner { text-align:center; font-size:14px; font-weight:800; color:var(--open); background:var(--open-fill); border:1.5px solid var(--open); border-radius:10px; padding:10px; margin:8px 0; }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta:disabled { opacity:.4; cursor:not-allowed; }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+
+  /* trace console */
+  .trace-card { max-height:760px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Snake &amp; Ladder · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Start a game to begin — every click below logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var JUMPS = {
+  2:23, 8:34, 15:44, 28:51, 37:65, 49:74, 60:85, 73:91,   // ladders (bottom -> top)
+  17:4, 25:9, 32:13, 46:22, 54:31, 63:39, 76:47, 88:59, 94:70, 98:78  // snakes (head -> tail)
+};
+function isLadder(cell){ return JUMPS[cell] !== undefined && JUMPS[cell] > cell; }
+function isSnake(cell){ return JUMPS[cell] !== undefined && JUMPS[cell] < cell; }
+
+var PLAYER_NAMES = ['Alice','Bob','Carol'];
+
+var state = {
+  playerCount: 2,
+  positions: [],
+  currentIndex: 0,
+  winner: null,
+  seq: 0
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// deterministic-ish pseudo dice for the demo, not tied to the real Java run's seed
+function rollDice(){ state.seq++; var v = ((state.seq * 2654435761) % 6 + 6) % 6 + 1; return v; }
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+// ---------- board rendering (boustrophedon, like a real board) ----------
+function renderBoardHTML(){
+  var rowsHtml = '';
+  for (var visualRow=0; visualRow<10; visualRow++){
+    var boardRow = 9 - visualRow;
+    var cells = [];
+    if (boardRow % 2 === 0){
+      for (var c=boardRow*10+1; c<=boardRow*10+10; c++) cells.push(c);
+    } else {
+      for (var c2=boardRow*10+10; c2>=boardRow*10+1; c2--) cells.push(c2);
+    }
+    cells.forEach(function(cell){
+      var cls = 'cell'+(isSnake(cell)?' snake-head':isLadder(cell)?' ladder-bottom':'');
+      var tokens = '';
+      for (var p=0; p<state.playerCount; p++){
+        if (state.positions[p] === cell){
+          tokens += '<span class="token p'+p+'">'+PLAYER_NAMES[p].charAt(0)+'</span>';
+        }
+      }
+      rowsHtml += '<div class="'+cls+'">'+cell+(tokens?'<span class="tokens">'+tokens+'</span>':'')+'</div>';
+    });
+  }
+  return '<div class="board-grid">'+rowsHtml+'</div>';
+}
+function renderStatusHTML(){
+  var chips = '';
+  for (var p=0; p<state.playerCount; p++){
+    chips += '<span class="status-chip'+(p===state.currentIndex && !state.winner ? ' turn':'')+'">'+PLAYER_NAMES[p]+': '+state.positions[p]+'</span>';
+  }
+  return '<div class="status-row">'+chips+'</div>'+(state.winner ? '<div class="winner-banner">'+esc(state.winner)+' WINS!</div>' : '');
+}
+
+// ---------- screens ----------
+function screenSetup(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>How many players?</h1><p class="stage-cap">Board has 8 ladders and 10 snakes, same layout as the test scenario.</p>'+
+    '<div class="choice-row">'+
+    [2,3].map(function(n){ return '<button class="choice-btn" data-n="'+n+'"><span class="label">'+n+' players</span></button>'; }).join('')+
+    '</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-n]'), function(b){
+    b.addEventListener('click', function(){
+      state.playerCount = parseInt(b.getAttribute('data-n'), 10);
+      state.positions = new Array(state.playerCount).fill(0);
+      logDivider('— New game: '+PLAYER_NAMES.slice(0, state.playerCount).join(', ')+' —');
+      screenBuildSteps();
+    });
+  });
+}
+
+function buildSetupSteps(){
+  return [
+    { code:'Board board = new BoardBuilder(100)\n  .addLadder(2, 23).addLadder(8, 34) ... (8 total)\n  .addSnake(17, 4).addSnake(25, 9) ... (10 total)\n  .build();',
+      detail:'validates every cell is unique and every snake/ladder points the right direction' },
+    { code:'SnakeAndLadderService service = new SnakeAndLadderService(board, playerNames, new RandomDiceStrategy(seed));',
+      detail:PLAYER_NAMES.slice(0, state.playerCount).join(', ')+' all start at position 0' }
+  ];
+}
+
+function screenBuildSteps(){
+  var steps=buildSetupSteps(), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>Building the game</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function buildRollSteps(){
+  var p = state.currentIndex;
+  var name = PLAYER_NAMES[p];
+  var from = state.positions[p];
+  var roll = rollDice();
+  var tentative = from + roll;
+  var steps = [];
+  steps.push({ code:'int roll = diceStrategy.roll();', detail:name+' rolls a '+roll });
+  steps.push({ code:'int tentative = from + roll;', detail:from+' + '+roll+' = '+tentative });
+
+  if (tentative > 100){
+    steps.push({ code:'if (tentative > board.getSize()) { advanceTurn(); return roll; }',
+      detail:tentative+' > 100 -> overshoot, no move this turn',
+      effect:function(){ state.currentIndex = (state.currentIndex+1) % state.playerCount; } });
+    return steps;
+  }
+
+  steps.push({ code:'current.setPosition(tentative);', detail:name+' moves to '+tentative,
+    effect:function(){ state.positions[p] = tentative; } });
+  steps.push({ code:'notifyPositionChanged(name, from, tentative, DICE_ROLL);', detail:'Observer fires' });
+
+  var jump = JUMPS[tentative];
+  if (jump !== undefined){
+    var reason = jump < tentative ? 'SNAKE' : 'LADDER';
+    steps.push({ code:'Integer jumpTo = board.getJumps().get(tentative);', detail:'cell '+tentative+' has a '+reason.toLowerCase()+' -> '+jump });
+    steps.push({ code:'current.setPosition(jumpTo); notifyPositionChanged(name, tentative, jumpTo, '+reason+');',
+      detail:name+' '+(reason==='SNAKE'?'slides down':'climbs up')+' to '+jump,
+      effect:function(){ state.positions[p] = jump; } });
+  }
+
+  var finalPos = jump !== undefined ? jump : tentative;
+  if (finalPos === 100){
+    steps.push({ code:'if (current.getPosition() == board.getSize()) { winner = name; notifyGameWon(name); }',
+      detail:name+' reaches exactly 100 -> WINS',
+      effect:function(){ state.winner = name; } });
+  } else {
+    steps.push({ code:'advanceTurn();', detail:'turn passes to the next player',
+      effect:function(){ state.currentIndex = (state.currentIndex+1) % state.playerCount; } });
+  }
+  return steps;
+}
+
+function screenRollSteps(){
+  logDivider('— rollAndMove() —');
+  var steps=buildRollSteps(), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>service.rollAndMove()</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderStatusHTML()+
+      '<div class="section-label">Board</div>'+renderBoardHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function screenControlRoom(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Control room</h1><p class="stage-cap">SnakeAndLadderService, live.</p>'+
+    renderStatusHTML()+
+    '<div class="section-label">Board</div>'+renderBoardHTML()+
+    '<div class="actions">'+
+      '<button class="cta" id="roll"'+(state.winner?' disabled':'')+'>Roll dice →</button>'+
+      '<button class="cta ghost" id="reset">Reset simulation ↻</button></div>';
+  var rollBtn = document.getElementById('roll');
+  if (!state.winner) rollBtn.addEventListener('click', screenRollSteps);
+  document.getElementById('reset').addEventListener('click', function(){
+    state = { playerCount:2, positions:[], currentIndex:0, winner:null, seq:0 };
+    document.getElementById('trace-log').innerHTML='<div class="trace-empty">Start a game to begin — every click below logs the real method call it triggers.</div>';
+    screenSetup();
+  });
+}
+
+screenSetup();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,283 @@
+> BOARD SNAKE 10 20
+ERROR InvalidBoardConfigException: Snake tail (20) must be below its head (10)
+> BOARD LADDER 50 30
+ERROR InvalidBoardConfigException: Ladder top (30) must be above its bottom (50)
+> BOARD LADDER 2 23
+OK ladder 2 -> 23
+> BOARD LADDER 8 34
+OK ladder 8 -> 34
+> BOARD LADDER 15 44
+OK ladder 15 -> 44
+> BOARD LADDER 28 51
+OK ladder 28 -> 51
+> BOARD LADDER 37 65
+OK ladder 37 -> 65
+> BOARD LADDER 49 74
+OK ladder 49 -> 74
+> BOARD LADDER 60 85
+OK ladder 60 -> 85
+> BOARD LADDER 73 91
+OK ladder 73 -> 91
+> BOARD SNAKE 17 4
+OK snake 17 -> 4
+> BOARD SNAKE 25 9
+OK snake 25 -> 9
+> BOARD SNAKE 32 13
+OK snake 32 -> 13
+> BOARD SNAKE 46 22
+OK snake 46 -> 22
+> BOARD SNAKE 54 31
+OK snake 54 -> 31
+> BOARD SNAKE 63 39
+OK snake 63 -> 39
+> BOARD SNAKE 76 47
+OK snake 76 -> 47
+> BOARD SNAKE 88 59
+OK snake 88 -> 59
+> BOARD SNAKE 94 70
+OK snake 94 -> 70
+> BOARD SNAKE 98 78
+OK snake 98 -> 78
+> BOARD LADDER 17 90
+ERROR InvalidBoardConfigException: Cell 17 already has a snake or ladder starting on it
+> START Alice,Bob 1
+OK game started for [Alice, Bob]
+> ROLL
+  [listener] Alice: 0 -> 4 (DICE_ROLL)
+OK Alice rolled 4
+> ROLL
+  [listener] Bob: 0 -> 5 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+  [listener] Alice: 4 -> 6 (DICE_ROLL)
+OK Alice rolled 2
+> ROLL
+  [listener] Bob: 5 -> 9 (DICE_ROLL)
+OK Bob rolled 4
+> ROLL
+  [listener] Alice: 6 -> 9 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 9 -> 14 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+  [listener] Alice: 9 -> 12 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 14 -> 19 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+  [listener] Alice: 12 -> 17 (DICE_ROLL)
+  [listener] Alice: 17 -> 4 (SNAKE)
+OK Alice rolled 5
+> ROLL
+  [listener] Bob: 19 -> 24 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+  [listener] Alice: 4 -> 6 (DICE_ROLL)
+OK Alice rolled 2
+> ROLL
+  [listener] Bob: 24 -> 26 (DICE_ROLL)
+OK Bob rolled 2
+> ROLL
+  [listener] Alice: 6 -> 8 (DICE_ROLL)
+  [listener] Alice: 8 -> 34 (LADDER)
+OK Alice rolled 2
+> ROLL
+  [listener] Bob: 26 -> 30 (DICE_ROLL)
+OK Bob rolled 4
+> ROLL
+  [listener] Alice: 34 -> 35 (DICE_ROLL)
+OK Alice rolled 1
+> ROLL
+  [listener] Bob: 30 -> 35 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+  [listener] Alice: 35 -> 38 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 35 -> 36 (DICE_ROLL)
+OK Bob rolled 1
+> ROLL
+  [listener] Alice: 38 -> 39 (DICE_ROLL)
+OK Alice rolled 1
+> ROLL
+  [listener] Bob: 36 -> 42 (DICE_ROLL)
+OK Bob rolled 6
+> ROLL
+  [listener] Alice: 39 -> 42 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 42 -> 45 (DICE_ROLL)
+OK Bob rolled 3
+> ROLL
+  [listener] Alice: 42 -> 47 (DICE_ROLL)
+OK Alice rolled 5
+> ROLL
+  [listener] Bob: 45 -> 51 (DICE_ROLL)
+OK Bob rolled 6
+> ROLL
+  [listener] Alice: 47 -> 50 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 51 -> 57 (DICE_ROLL)
+OK Bob rolled 6
+> ROLL
+  [listener] Alice: 50 -> 55 (DICE_ROLL)
+OK Alice rolled 5
+> ROLL
+  [listener] Bob: 57 -> 63 (DICE_ROLL)
+  [listener] Bob: 63 -> 39 (SNAKE)
+OK Bob rolled 6
+> ROLL
+  [listener] Alice: 55 -> 59 (DICE_ROLL)
+OK Alice rolled 4
+> ROLL
+  [listener] Bob: 39 -> 42 (DICE_ROLL)
+OK Bob rolled 3
+> ROLL
+  [listener] Alice: 59 -> 61 (DICE_ROLL)
+OK Alice rolled 2
+> ROLL
+  [listener] Bob: 42 -> 47 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+  [listener] Alice: 61 -> 62 (DICE_ROLL)
+OK Alice rolled 1
+> ROLL
+  [listener] Bob: 47 -> 52 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+  [listener] Alice: 62 -> 68 (DICE_ROLL)
+OK Alice rolled 6
+> ROLL
+  [listener] Bob: 52 -> 56 (DICE_ROLL)
+OK Bob rolled 4
+> ROLL
+  [listener] Alice: 68 -> 72 (DICE_ROLL)
+OK Alice rolled 4
+> ROLL
+  [listener] Bob: 56 -> 57 (DICE_ROLL)
+OK Bob rolled 1
+> ROLL
+  [listener] Alice: 72 -> 76 (DICE_ROLL)
+  [listener] Alice: 76 -> 47 (SNAKE)
+OK Alice rolled 4
+> ROLL
+  [listener] Bob: 57 -> 60 (DICE_ROLL)
+  [listener] Bob: 60 -> 85 (LADDER)
+OK Bob rolled 3
+> ROLL
+  [listener] Alice: 47 -> 49 (DICE_ROLL)
+  [listener] Alice: 49 -> 74 (LADDER)
+OK Alice rolled 2
+> ROLL
+  [listener] Bob: 85 -> 88 (DICE_ROLL)
+  [listener] Bob: 88 -> 59 (SNAKE)
+OK Bob rolled 3
+> ROLL
+  [listener] Alice: 74 -> 76 (DICE_ROLL)
+  [listener] Alice: 76 -> 47 (SNAKE)
+OK Alice rolled 2
+> ROLL
+  [listener] Bob: 59 -> 63 (DICE_ROLL)
+  [listener] Bob: 63 -> 39 (SNAKE)
+OK Bob rolled 4
+> ROLL
+  [listener] Alice: 47 -> 51 (DICE_ROLL)
+OK Alice rolled 4
+> ROLL
+  [listener] Bob: 39 -> 40 (DICE_ROLL)
+OK Bob rolled 1
+> ROLL
+  [listener] Alice: 51 -> 52 (DICE_ROLL)
+OK Alice rolled 1
+> ROLL
+  [listener] Bob: 40 -> 41 (DICE_ROLL)
+OK Bob rolled 1
+> ROLL
+  [listener] Alice: 52 -> 57 (DICE_ROLL)
+OK Alice rolled 5
+> ROLL
+  [listener] Bob: 41 -> 47 (DICE_ROLL)
+OK Bob rolled 6
+> ROLL
+  [listener] Alice: 57 -> 62 (DICE_ROLL)
+OK Alice rolled 5
+> ROLL
+  [listener] Bob: 47 -> 51 (DICE_ROLL)
+OK Bob rolled 4
+> ROLL
+  [listener] Alice: 62 -> 65 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 51 -> 55 (DICE_ROLL)
+OK Bob rolled 4
+> ROLL
+  [listener] Alice: 65 -> 66 (DICE_ROLL)
+OK Alice rolled 1
+> ROLL
+  [listener] Bob: 55 -> 57 (DICE_ROLL)
+OK Bob rolled 2
+> ROLL
+  [listener] Alice: 66 -> 69 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 57 -> 59 (DICE_ROLL)
+OK Bob rolled 2
+> ROLL
+  [listener] Alice: 69 -> 72 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 59 -> 62 (DICE_ROLL)
+OK Bob rolled 3
+> ROLL
+  [listener] Alice: 72 -> 73 (DICE_ROLL)
+  [listener] Alice: 73 -> 91 (LADDER)
+OK Alice rolled 1
+> ROLL
+  [listener] Bob: 62 -> 64 (DICE_ROLL)
+OK Bob rolled 2
+> ROLL
+  [listener] Alice: 91 -> 96 (DICE_ROLL)
+OK Alice rolled 5
+> ROLL
+  [listener] Bob: 64 -> 68 (DICE_ROLL)
+OK Bob rolled 4
+> ROLL
+OK Alice rolled 5
+> ROLL
+  [listener] Bob: 68 -> 69 (DICE_ROLL)
+OK Bob rolled 1
+> ROLL
+  [listener] Alice: 96 -> 99 (DICE_ROLL)
+OK Alice rolled 3
+> ROLL
+  [listener] Bob: 69 -> 74 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+OK Alice rolled 6
+> ROLL
+  [listener] Bob: 74 -> 77 (DICE_ROLL)
+OK Bob rolled 3
+> ROLL
+OK Alice rolled 2
+> ROLL
+  [listener] Bob: 77 -> 82 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+OK Alice rolled 2
+> ROLL
+  [listener] Bob: 82 -> 87 (DICE_ROLL)
+OK Bob rolled 5
+> ROLL
+  [listener] Alice: 99 -> 100 (DICE_ROLL)
+  [listener] Alice WINS!
+OK Alice rolled 1 -> WINNER: Alice
+> STATUS
+STATUS
+  Alice: 100
+  Bob: 87
+  winner: Alice
+> ROLL
+ERROR GameAlreadyWonException: Game is already over -- Alice won

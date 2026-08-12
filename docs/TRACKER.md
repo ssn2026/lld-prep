@@ -39,7 +39,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 ### Games — Board
 - [x] Chess `[learning-mode]`
 - [ ] Tic-Tac-Toe
-- [ ] Snake & Ladder
+- [x] Snake & Ladder `[learning-mode]`
 - [ ] Ludo
 
 ### Games — Card
