@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Logger Service — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1120px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1.15fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 14px; min-height:18px; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:110px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 10px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; text-align:center; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn.picked { border-color:var(--amber); background:var(--open-fill); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); }
+
+  .section-label { font-size:10.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint); margin:14px 0 6px; }
+  .section-label:first-of-type { margin-top:0; }
+
+  .config-row { display:flex; gap:8px; flex-wrap:wrap; font-size:11.5px; }
+  .config-chip { padding:5px 12px; border-radius:999px; background:var(--surface-2); border:1px solid var(--line); color:var(--ink-dim); font-weight:700; }
+
+  .console-panel { background:#14171a; color:#dcece2; border-radius:10px; padding:12px 14px; font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-size:11.5px; min-height:70px; max-height:180px; overflow-y:auto; }
+  .console-line { white-space:pre-wrap; margin-bottom:2px; }
+  .console-empty { color:#6c7377; }
+  .file-panel { background:var(--surface-2); border:1.5px dashed var(--line-strong); border-radius:10px; padding:12px 14px; font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-size:11.5px; min-height:70px; max-height:180px; overflow-y:auto; }
+  .file-line { white-space:pre-wrap; margin-bottom:2px; color:var(--ink-dim); }
+  .file-empty { color:var(--ink-faint); }
+  .filtered-note { font-size:11px; color:var(--taken); margin-top:6px; }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+
+  /* trace console */
+  .trace-card { max-height:720px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Logger Service · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Pick a minimum level to start — every click below logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var LEVELS = ['DEBUG','INFO','WARN','ERROR'];
+
+var state = {
+  minLevel: 'INFO',
+  formatter: 'PLAIN',
+  seq: 0,
+  consoleLines: [],
+  fileLines: []
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function levelOrdinal(l){ return LEVELS.indexOf(l); }
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+function format(seq, level, message){
+  if (state.formatter==='JSON'){
+    return '{"seq":'+seq+',"level":"'+level+'","message":"'+message.replace(/"/g,'\\"')+'"}';
+  }
+  return '['+seq+'] '+level+' '+message;
+}
+
+// ---------- render fragments ----------
+function renderConfigHTML(){
+  return '<div class="config-row">'+
+    '<span class="config-chip">minLevel = '+state.minLevel+'</span>'+
+    '<span class="config-chip">formatter = '+state.formatter+'</span>'+
+    '<span class="config-chip">appenders = console + file</span></div>';
+}
+function renderConsoleHTML(){
+  return '<div class="console-panel">'+(state.consoleLines.length
+    ? state.consoleLines.map(function(l){ return '<div class="console-line">'+esc(l)+'</div>'; }).join('')
+    : '<div class="console-empty">(nothing yet)</div>')+'</div>';
+}
+function renderFileHTML(){
+  return '<div class="file-panel">'+(state.fileLines.length
+    ? state.fileLines.map(function(l){ return '<div class="file-line">'+esc(l)+'</div>'; }).join('')
+    : '<div class="file-empty">(app.log is empty)</div>')+'</div>';
+}
+
+// ---------- screens ----------
+function screenSetup(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Configure the logger</h1><p class="stage-cap">This is a Singleton — one LoggerService for the whole process.</p>'+
+    '<div class="choice-row">'+LEVELS.map(function(l){
+      return '<button class="choice-btn" data-l="'+l+'"><span class="label">'+l+'</span><span class="sub">min level</span></button>';
+    }).join('')+'</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-l]'), function(b){
+    b.addEventListener('click', function(){
+      state.minLevel = b.getAttribute('data-l');
+      logDivider('— Setup —');
+      logStep('LoggerService logger = LoggerService.getInstance();', 'always the same instance -- private constructor, static INSTANCE');
+      logStep('logger.setMinLevel('+state.minLevel+');', 'events below this level get dropped before formatting or appending');
+      logStep('logger.addAppender(new ConsoleLogAppender());', 'Observer #1 registered');
+      logStep('logger.addAppender(new FileLogAppender(Path.of("app.log")));', 'Observer #2 registered');
+      screenControlRoom();
+    });
+  });
+}
+
+function buildLogSteps(level, message){
+  var steps = [];
+  var passes = levelOrdinal(level) >= levelOrdinal(state.minLevel);
+  steps.push({ code:'logger.log('+level+', "'+message+'");', detail:'entry point for debug()/info()/warn()/error() alike' });
+  steps.push({ code:'if (level.ordinal() < minLevel.ordinal()) return;',
+    detail: passes
+      ? level+'.ordinal()='+levelOrdinal(level)+' >= '+state.minLevel+'.ordinal()='+levelOrdinal(state.minLevel)+' -> proceeds'
+      : level+'.ordinal()='+levelOrdinal(level)+' < '+state.minLevel+'.ordinal()='+levelOrdinal(state.minLevel)+' -> filtered, stop here' });
+  if (!passes) return steps;
+
+  var formatted;
+  steps.push({ code:'LogEvent event = new LogEvent(++seq, '+level+', message);', detail:'seq becomes '+(state.seq+1),
+    effect:function(){ state.seq++; } });
+  steps.push({ code:'String formatted = formatter.format(event);',
+    detail: state.formatter+'Formatter builds the line',
+    effect:function(){ formatted = format(state.seq, level, message); } });
+  steps.push({ code:'for (LogAppender appender : appenders) appender.append(formatted);',
+    detail:'both Observers get the exact same formatted line',
+    effect:function(){ state.consoleLines.push('[console] '+formatted); state.fileLines.push(formatted); } });
+  return steps;
+}
+
+function screenLogSteps(level, message){
+  logDivider('— log('+level+', "'+message+'") —');
+  var steps=buildLogSteps(level, message), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>logger.log('+level+', ...)</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      renderConfigHTML()+
+      '<div class="section-label">Console appender</div>'+renderConsoleHTML()+
+      '<div class="section-label">File appender (app.log)</div>'+renderFileHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function screenControlRoom(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Control room</h1><p class="stage-cap">LoggerService, live.</p>'+
+    renderConfigHTML()+
+    '<div class="section-label">Console appender</div>'+renderConsoleHTML()+
+    '<div class="section-label">File appender (app.log)</div>'+renderFileHTML()+
+    '<div class="section-label">Log a message</div>'+
+    '<div class="choice-row">'+LEVELS.map(function(l){
+      return '<button class="choice-btn" data-log="'+l+'"><span class="label">'+l+'</span><span class="sub">log at this level</span></button>';
+    }).join('')+'</div>'+
+    '<div class="actions">'+
+      '<button class="cta ghost" id="toggle-fmt">Switch formatter → '+(state.formatter==='PLAIN'?'JSON':'PLAIN')+'</button>'+
+      '<button class="cta ghost" id="reset">Reset simulation ↻</button></div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-log]'), function(b){
+    b.addEventListener('click', function(){
+      var level = b.getAttribute('data-log');
+      var messages = { DEBUG:'cache lookup for key=42', INFO:'server started on port 8080', WARN:'cache miss rate above 5 percent', ERROR:'failed to connect to database' };
+      screenLogSteps(level, messages[level]);
+    });
+  });
+  document.getElementById('toggle-fmt').addEventListener('click', function(){
+    var next = state.formatter==='PLAIN' ? 'JSON' : 'PLAIN';
+    var className = next==='JSON' ? 'JsonFormatter' : 'PlainTextFormatter';
+    logStep('logger.setFormatter(new '+className+'());', 'future log lines use the new shape; past lines are untouched',
+      function(){ state.formatter = next; });
+    screenControlRoom();
+  });
+  document.getElementById('reset').addEventListener('click', function(){
+    state = { minLevel:'INFO', formatter:'PLAIN', seq:0, consoleLines:[], fileLines:[] };
+    document.getElementById('trace-log').innerHTML='<div class="trace-empty">Pick a minimum level to start — every click below logs the real method call it triggers.</div>';
+    screenSetup();
+  });
+}
+
+screenSetup();
+})();
+</script>
+</body>
+</html>

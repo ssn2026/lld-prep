@@ -1,0 +1,5 @@
+[1] INFO server started on port 8080
+[2] WARN cache miss rate above 5 percent
+[3] ERROR failed to connect to database
+{"seq":4,"level":"INFO","message":"switched to JSON formatting"}
+{"seq":5,"level":"ERROR","message":"disk usage at 91 percent"}

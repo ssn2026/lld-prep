@@ -1,0 +1,31 @@
+> APPENDER CONSOLE
+OK console appender added
+> APPENDER FILE test/output/app.log
+OK file appender added -> test\output\app.log
+> LEVEL INFO
+OK min level = INFO
+> LOG DEBUG this debug line should be filtered out
+OK logged
+> LOG INFO server started on port 8080
+OK logged
+> LOG WARN cache miss rate above 5 percent
+OK logged
+> LOG ERROR failed to connect to database
+OK logged
+> FORMAT JSON
+OK formatter = JSON
+> LOG INFO switched to JSON formatting
+OK logged
+> LOG ERROR disk usage at 91 percent
+OK logged
+> DUMPFILE test/output/app.log
+DUMPFILE test\output\app.log
+  [1] INFO server started on port 8080
+  [2] WARN cache miss rate above 5 percent
+  [3] ERROR failed to connect to database
+  {"seq":4,"level":"INFO","message":"switched to JSON formatting"}
+  {"seq":5,"level":"ERROR","message":"disk usage at 91 percent"}
+> LOG TRACE this level does not exist
+ERROR InvalidLogLevelException: Unknown log level: TRACE
+> LEVEL VERBOSE
+ERROR InvalidLogLevelException: Unknown log level: VERBOSE

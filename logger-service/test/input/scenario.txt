@@ -1,0 +1,24 @@
+# Logger Service demo script
+
+APPENDER CONSOLE
+APPENDER FILE test/output/app.log
+LEVEL INFO
+
+# DEBUG is below the configured threshold -- filtered, never reaches appenders
+LOG DEBUG this debug line should be filtered out
+
+LOG INFO server started on port 8080
+LOG WARN cache miss rate above 5 percent
+LOG ERROR failed to connect to database
+
+# switch formatter mid-stream -- same appenders, different line shape
+FORMAT JSON
+LOG INFO switched to JSON formatting
+LOG ERROR disk usage at 91 percent
+
+# prove the file appender actually wrote real bytes to disk
+DUMPFILE test/output/app.log
+
+# --- error: unknown level ---
+LOG TRACE this level does not exist
+LEVEL VERBOSE
