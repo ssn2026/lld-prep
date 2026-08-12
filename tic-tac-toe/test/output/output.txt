@@ -1,0 +1,37 @@
+> MOVE 5 5
+ERROR InvalidMoveException: Invalid move at (5,5): out of bounds
+> MOVE 0 0
+  [listener] X played (0,0)
+OK move (0,0) -> IN_PROGRESS
+> STATUS
+STATUS IN_PROGRESS
+  X . .
+  . . .
+  . . .
+> MOVE 0 0
+ERROR InvalidMoveException: Invalid move at (0,0): cell already occupied
+> MOVE 1 1
+  [listener] O played (1,1)
+OK move (1,1) -> IN_PROGRESS
+> MOVE 0 1
+  [listener] X played (0,1)
+OK move (0,1) -> IN_PROGRESS
+> MOVE 2 2
+  [listener] O played (2,2)
+OK move (2,2) -> IN_PROGRESS
+> STATUS
+STATUS IN_PROGRESS
+  X X .
+  . O .
+  . . O
+> MOVE 0 2
+  [listener] X played (0,2)
+  [listener] game over: X_WON
+OK move (0,2) -> X_WON
+> STATUS
+STATUS X_WON
+  X X X
+  . O .
+  . . O
+> MOVE 1 0
+ERROR GameOverException: Cannot move -- game is already over (X_WON)

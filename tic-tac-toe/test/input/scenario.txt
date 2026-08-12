@@ -1,0 +1,23 @@
+# Tic-Tac-Toe demo script
+# MOVE <row> <col>, marks alternate X then O automatically
+
+# --- error: out of bounds ---
+MOVE 5 5
+
+MOVE 0 0
+STATUS
+
+# --- error: cell already occupied ---
+MOVE 0 0
+
+MOVE 1 1
+MOVE 0 1
+MOVE 2 2
+STATUS
+
+# X completes the top row: (0,0) (0,1) (0,2)
+MOVE 0 2
+STATUS
+
+# --- error: game already over ---
+MOVE 1 0
