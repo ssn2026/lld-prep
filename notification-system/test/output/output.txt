@@ -1,0 +1,24 @@
+> SUBSCRIBE Alice EMAIL
+OK Alice subscribed to EMAIL
+> SUBSCRIBE Alice SMS
+OK Alice subscribed to SMS
+> SUBSCRIBE Bob PUSH
+OK Bob subscribed to PUSH
+> NOTIFY Alice NORMAL Welcome Thanks for signing up!
+OK notified 2 channel(s) for Alice
+> NOTIFY Alice HIGH ServerDown The database is unreachable
+OK notified 2 channel(s) for Alice
+> NOTIFY Bob LOW WeeklyDigest Here is what you missed this week
+OK notified 1 channel(s) for Bob
+> NOTIFY Carol NORMAL Hello This should reach nobody
+OK notified 0 channel(s) for Carol
+> UNSUBSCRIBE Alice SMS
+OK Alice unsubscribed from SMS
+> NOTIFY Alice HIGH FollowUp SMS channel should no longer receive this
+OK notified 1 channel(s) for Alice
+> UNSUBSCRIBE Bob SMS
+NOOP Bob was not subscribed to SMS
+> NOTIFY Alice NORMAL EmptyBody
+ERROR IncompleteNotificationException: Cannot build a Notification without a body
+> SUBSCRIBE Alice FAX
+ERROR IllegalArgumentException: No enum constant model.ChannelType.FAX

@@ -66,7 +66,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [ ] InMemory Task Scheduler (run task at scheduled time)
 - [x] Calendar `[learning-mode]`
 - [ ] Adaptive Alert Monitoring System
-- [ ] Notification System
+- [x] Notification System `[learning-mode]`
 - [x] Logger Service / Logger Library `[learning-mode]`
 - [ ] Sort Logger System
 - [ ] Pub-Sub Based Messaging Queue

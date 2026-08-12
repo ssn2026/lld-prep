@@ -1,0 +1,29 @@
+# Notification System demo script
+
+SUBSCRIBE Alice EMAIL
+SUBSCRIBE Alice SMS
+SUBSCRIBE Bob PUSH
+
+# --- normal priority: PlainContent + SignatureDecorator only ---
+NOTIFY Alice NORMAL Welcome Thanks for signing up!
+
+# --- high priority: PlainContent + SignatureDecorator + UrgentPrefixDecorator ---
+NOTIFY Alice HIGH ServerDown The database is unreachable
+
+# --- Bob is only on PUSH, so only 1 channel gets notified ---
+NOTIFY Bob LOW WeeklyDigest Here is what you missed this week
+
+# --- Carol never subscribed to anything: legal, just notifies 0 channels ---
+NOTIFY Carol NORMAL Hello This should reach nobody
+
+UNSUBSCRIBE Alice SMS
+NOTIFY Alice HIGH FollowUp SMS channel should no longer receive this
+
+# --- graceful no-op: unsubscribing from a channel that was never subscribed ---
+UNSUBSCRIBE Bob SMS
+
+# --- error: missing body -- Builder validation fires ---
+NOTIFY Alice NORMAL EmptyBody
+
+# --- error: unknown channel type ---
+SUBSCRIBE Alice FAX
