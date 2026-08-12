@@ -1,0 +1,47 @@
+> USER Alice
+OK u1 = Alice
+> USER Bob
+OK u2 = Bob
+> USER Carol
+OK u3 = Carol
+> REQUEST u1,u2
+OK r1 (u1 -> u2)
+> REQUEST u1,u3
+OK r2 (u1 -> u3)
+> REQUEST u2,u1
+ERROR DuplicatePendingRequestException: A pending friend request already exists between u2 and u1
+> ACCEPT r1
+  [listener] u1 and u2 are now friends
+OK r1 accepted
+> REJECT r2
+OK r2 rejected
+> POST u1 Hello from Alice
+  [listener] u1 posted p1: Hello from Alice
+OK p1 by u1
+> POST u2 Hello from Bob
+  [listener] u2 posted p2: Hello from Bob
+OK p2 by u2
+> POST u3 Hello from Carol
+  [listener] u3 posted p3: Hello from Carol
+OK p3 by u3
+> FEED u1
+FEED u1
+  p2 [u2] Hello from Bob
+  p1 [u1] Hello from Alice
+> FEED u3
+FEED u3
+  p3 [u3] Hello from Carol
+> REQUEST u1,u2
+ERROR AlreadyFriendsException: u1 and u2 are already friends
+> REQUEST u1,u1
+ERROR SelfFriendRequestException: User u1 cannot send a friend request to themselves
+> ACCEPT r1
+ERROR InvalidFriendRequestTransitionException: Cannot accept a friend request that is ACCEPTED
+> REJECT r2
+ERROR InvalidFriendRequestTransitionException: Cannot reject a friend request that is REJECTED
+> ACCEPT r99
+ERROR FriendRequestNotFoundException: No friend request found with id: r99
+> POST u99 This should fail
+ERROR UserNotFoundException: No user found with id: u99
+> FEED u99
+ERROR UserNotFoundException: No user found with id: u99

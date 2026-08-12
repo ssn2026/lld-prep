@@ -1,0 +1,37 @@
+# Facebook (mini social network) demo script
+
+USER Alice
+USER Bob
+USER Carol
+
+REQUEST u1,u2
+REQUEST u1,u3
+
+# --- error: sending a second pending request between the same pair ---
+REQUEST u2,u1
+
+ACCEPT r1
+REJECT r2
+
+# u1 and u2 are friends; u3 rejected, so not a friend
+POST u1 Hello from Alice
+POST u2 Hello from Bob
+POST u3 Hello from Carol
+
+FEED u1
+FEED u3
+
+# --- error: already friends ---
+REQUEST u1,u2
+
+# --- error: sending to yourself ---
+REQUEST u1,u1
+
+# --- error: accepting/rejecting a request that already settled ---
+ACCEPT r1
+REJECT r2
+
+# --- error: unknown request / unknown user ---
+ACCEPT r99
+POST u99 This should fail
+FEED u99

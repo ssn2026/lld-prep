@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Facebook — Step Through the Code</title>
+<style>
+  :root {
+    --paper:#e6e8ea; --surface:#f6f7f7; --surface-2:#eceeef;
+    --ink:#14171a; --ink-dim:#565d61; --ink-faint:#878d90;
+    --line:#c7cbcd; --line-strong:#a8adaf;
+    --amber:#e0982f; --amber-strong:#c67f1e; --amber-glow:rgba(224,152,47,.5); --on-amber:#1a1206;
+    --open:#3f8f63; --open-fill:#dcece2; --taken:#b6503f; --taken-fill:#f3ddd8;
+    --shadow:0 1px 2px rgba(20,23,26,.08),0 14px 34px rgba(20,23,26,.1);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+      --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+      --line:#33393d; --line-strong:#454c50;
+      --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+      --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#14171a; --surface:#1c2024; --surface-2:#22262a;
+    --ink:#eef1f2; --ink-dim:#9aa1a5; --ink-faint:#6c7377;
+    --line:#33393d; --line-strong:#454c50;
+    --amber:#eaa53c; --amber-strong:#f5b657; --amber-glow:rgba(234,165,60,.45); --on-amber:#1a1206;
+    --open:#5cb37e; --open-fill:#1c2b23; --taken:#d97764; --taken-fill:#2e211e;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 14px 34px rgba(0,0,0,.3);
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:-apple-system,'Segoe UI',Arial,sans-serif; padding:24px 16px 60px; }
+  .mono { font-family:ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace; font-variant-numeric:tabular-nums; }
+  button { font-family:inherit; }
+  *:focus-visible { outline:2px solid var(--amber-strong); outline-offset:2px; }
+  h1 { font-size:20px; font-weight:800; margin:0 0 4px; }
+  .wrap { max-width:1150px; margin:0 auto; }
+  .eyebrow { font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-faint); margin-bottom:16px; }
+
+  .layout { display:grid; grid-template-columns:1.15fr 1fr; gap:16px; align-items:start; }
+  @media (max-width:860px){ .layout{ grid-template-columns:1fr; } }
+
+  .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); padding:24px; }
+  .stage-cap { font-size:13.5px; color:var(--ink-dim); margin:2px 0 14px; min-height:18px; }
+
+  .choice-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .choice-btn { flex:1; min-width:100px; display:flex; flex-direction:column; align-items:center; gap:6px; padding:14px 10px; background:var(--paper); border:1.5px solid var(--line-strong); border-radius:12px; cursor:pointer; text-align:center; }
+  .choice-btn:hover { border-color:var(--amber); }
+  .choice-btn .label { font-size:12.5px; font-weight:700; }
+  .choice-btn .sub { font-size:10px; color:var(--ink-faint); }
+
+  .section-label { font-size:10.5px; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--ink-faint); margin:14px 0 6px; }
+  .section-label:first-of-type { margin-top:0; }
+
+  .people-row { display:flex; gap:10px; flex-wrap:wrap; }
+  .person-card { background:var(--surface-2); border:1.5px solid var(--line-strong); border-radius:10px; padding:8px 12px; font-size:11.5px; min-width:100px; }
+  .person-card .pname { font-weight:800; }
+  .person-card .pfriends { color:var(--ink-dim); font-size:10.5px; margin-top:2px; }
+
+  .req-list, .feed-list { display:flex; flex-direction:column; gap:6px; }
+  .req-card { display:flex; align-items:center; gap:8px; padding:6px 10px; border:1.5px solid var(--line-strong); border-radius:8px; background:var(--paper); font-size:11px; }
+  .req-card.clickable { cursor:pointer; }
+  .req-card.clickable:hover { border-color:var(--amber); }
+  .req-status { margin-left:auto; font-size:9.5px; font-weight:800; padding:2px 8px; border-radius:999px; background:var(--surface-2); color:var(--ink-dim); }
+  .feed-card { padding:8px 10px; border:1.5px solid var(--line-strong); border-radius:8px; background:var(--paper); font-size:11.5px; }
+  .feed-card .fauthor { font-weight:800; margin-right:6px; }
+  .list-empty { font-size:11px; color:var(--ink-faint); }
+
+  button.cta { padding:11px 20px; background:var(--amber); color:var(--on-amber); border:none; border-radius:999px; font-weight:800; font-size:13px; cursor:pointer; }
+  button.cta:hover { background:var(--amber-strong); }
+  button.cta.ghost { background:transparent; color:var(--ink-dim); border:1.5px solid var(--line-strong); }
+  .actions { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:16px; }
+
+  /* trace console */
+  .trace-card { max-height:760px; overflow-y:auto; }
+  .trace-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .trace-head .t { font-size:12px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-dim); }
+  .trace-log { display:flex; flex-direction:column; gap:10px; }
+  .trace-divider { font-size:10.5px; font-weight:800; color:var(--amber-strong); letter-spacing:.06em; text-transform:uppercase; margin:8px 0 2px; border-top:1px dashed var(--line); padding-top:10px; }
+  .trace-step { animation:fadeIn .35s ease; border-left:2.5px solid var(--amber); padding:2px 0 2px 10px; }
+  @keyframes fadeIn { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+  .trace-step .code { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .trace-step .detail { font-size:11.5px; color:var(--ink-faint); margin-top:2px; }
+  .trace-empty { font-size:13px; color:var(--ink-faint); padding:10px 0; }
+  @media (prefers-reduced-motion: reduce){ .trace-step{ animation:none; } }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="eyebrow">Facebook · LLD-Prep</div>
+  <div class="layout">
+    <div class="card" id="stage"></div>
+    <div class="card trace-card">
+      <div class="trace-head"><span class="t">Live code trace</span><span class="mono" id="step-count" style="font-size:11px;color:var(--ink-faint)"></span></div>
+      <div class="trace-log" id="trace-log"><div class="trace-empty">Send a friend request to start — every click below logs the real method call it triggers.</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+var PEOPLE = ['Alice','Bob','Carol'];
+
+var state = {
+  friends: { Alice:[], Bob:[], Carol:[] },
+  requests: [],   // {id, from, to, status}
+  posts: [],      // {id, author, content, seq}
+  reqSeq: 0,
+  postSeq: 0
+};
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ---------- trace log ----------
+function logDivider(text){
+  var d=document.createElement('div'); d.className='trace-divider'; d.textContent=text;
+  document.getElementById('trace-log').appendChild(d);
+}
+function logStep(codeLine, detail, effect){
+  var log = document.getElementById('trace-log');
+  var empty = log.querySelector('.trace-empty'); if (empty) empty.remove();
+  var div = document.createElement('div'); div.className='trace-step';
+  div.innerHTML = '<div class="code mono">'+esc(codeLine)+'</div><div class="detail">'+esc(detail)+'</div>';
+  log.appendChild(div);
+  div.scrollIntoView({block:'end', behavior:'smooth'});
+  if (effect) effect();
+}
+
+function areFriends(a, b){ return state.friends[a].indexOf(b) >= 0; }
+function hasPendingBetween(a, b){
+  return state.requests.some(function(r){ return r.status==='PENDING' && ((r.from===a&&r.to===b)||(r.from===b&&r.to===a)); });
+}
+
+// ---------- render fragments ----------
+function renderPeopleHTML(){
+  return '<div class="people-row">'+PEOPLE.map(function(p){
+    return '<div class="person-card"><div class="pname">'+p+'</div><div class="pfriends">'+(state.friends[p].length?state.friends[p].join(', '):'no friends yet')+'</div></div>';
+  }).join('')+'</div>';
+}
+function renderRequestsHTML(clickableForAction){
+  var pending = state.requests.filter(function(r){ return r.status==='PENDING'; });
+  if (!pending.length) return '<div class="list-empty">No pending requests.</div>';
+  return '<div class="req-list">'+pending.map(function(r){
+    var cls = 'req-card'+(clickableForAction?' clickable':'');
+    return '<div class="'+cls+'" data-id="'+r.id+'">'+r.id+': '+r.from+' → '+r.to+'<span class="req-status">'+r.status+'</span></div>';
+  }).join('')+'</div>';
+}
+
+// ---------- screens ----------
+function screenPickFrom(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Send a friend request</h1><p class="stage-cap">Who is sending it?</p>'+
+    '<div class="choice-row">'+PEOPLE.map(function(p){ return '<button class="choice-btn" data-p="'+p+'"><span class="label">'+p+'</span></button>'; }).join('')+'</div>'+
+    '<div class="section-label">People</div>'+renderPeopleHTML();
+  Array.prototype.forEach.call(el.querySelectorAll('[data-p]'), function(b){
+    b.addEventListener('click', function(){ screenPickTo(b.getAttribute('data-p')); });
+  });
+}
+function screenPickTo(from){
+  var el=document.getElementById('stage');
+  var others = PEOPLE.filter(function(p){ return p!==from; });
+  el.innerHTML='<h1>'+from+' sends a request to...</h1><p class="stage-cap">Pick a recipient.</p>'+
+    '<div class="choice-row">'+others.map(function(p){ return '<button class="choice-btn" data-p="'+p+'"><span class="label">'+p+'</span></button>'; }).join('')+'</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-p]'), function(b){
+    b.addEventListener('click', function(){ screenRequestSteps(from, b.getAttribute('data-p')); });
+  });
+}
+
+function buildRequestSteps(from, to){
+  var steps = [];
+  steps.push({ code:'userRepository.findById("'+from+'"); userRepository.findById("'+to+'");', detail:'both exist' });
+  if (areFriends(from, to)){
+    steps.push({ code:'if (friendshipRepository.areFriends(from, to)) throw new AlreadyFriendsException(...);',
+      detail:'true -- '+from+' and '+to+' are already friends' });
+    return steps;
+  }
+  steps.push({ code:'friendshipRepository.areFriends("'+from+'", "'+to+'");', detail:'false -- not friends yet' });
+  if (hasPendingBetween(from, to)){
+    steps.push({ code:'if (requestRepository.hasPendingBetween(from, to)) throw new DuplicatePendingRequestException(...);',
+      detail:'true -- a pending request already exists between them' });
+    return steps;
+  }
+  steps.push({ code:'requestRepository.hasPendingBetween("'+from+'", "'+to+'");', detail:'false -- clear to send' });
+  var id;
+  steps.push({ code:'FriendRequest request = new FriendRequest(requestId, "'+from+'", "'+to+'");',
+    detail:'state = PendingState.INSTANCE',
+    effect:function(){ state.reqSeq++; id='r'+state.reqSeq; state.requests.push({id:id, from:from, to:to, status:'PENDING'}); } });
+  steps.push({ code:'requestRepository.save(request);', detail:'stored, waiting for accept/reject' });
+  return steps;
+}
+
+function screenRequestSteps(from, to){
+  logDivider('— sendFriendRequest('+from+', '+to+') —');
+  var steps=buildRequestSteps(from, to), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>sendFriendRequest(...)</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      '<div class="section-label">Pending requests</div>'+renderRequestsHTML(false)+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function buildDecisionSteps(request, accept){
+  var steps = [];
+  steps.push({ code:'FriendRequest request = requestRepository.findById("'+request.id+'");', detail:'found, status = PENDING' });
+  if (accept){
+    steps.push({ code:'request.accept();', detail:'state = state.accept(this)   // PendingState -> AcceptedState',
+      effect:function(){ request.status='ACCEPTED'; } });
+    steps.push({ code:'friendshipRepository.addFriendship("'+request.from+'", "'+request.to+'");',
+      detail:'both directions recorded',
+      effect:function(){ state.friends[request.from].push(request.to); state.friends[request.to].push(request.from); } });
+    steps.push({ code:'notifyFriendRequestAccepted("'+request.from+'", "'+request.to+'");', detail:'Observer fires' });
+  } else {
+    steps.push({ code:'request.reject();', detail:'state = state.reject(this)   // PendingState -> RejectedState',
+      effect:function(){ request.status='REJECTED'; } });
+  }
+  return steps;
+}
+
+function screenDecisionSteps(request, accept){
+  logDivider('— '+(accept?'accept':'reject')+'FriendRequest('+request.id+') —');
+  var steps=buildDecisionSteps(request, accept), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>'+(accept?'accept':'reject')+'FriendRequest("'+request.id+'")</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      '<div class="section-label">People</div>'+renderPeopleHTML()+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function screenPickRequestDecision(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Respond to a request</h1><p class="stage-cap">Click a request, then choose accept or reject.</p>'+
+    '<div id="pick-list"></div>'+
+    '<div class="actions"><button class="cta ghost" id="back">← Back</button></div>';
+  var list = document.getElementById('pick-list');
+  var pending = state.requests.filter(function(r){ return r.status==='PENDING'; });
+  if (!pending.length){
+    list.innerHTML = '<div class="list-empty">No pending requests.</div>';
+  } else {
+    pending.forEach(function(r){
+      var wrap = document.createElement('div');
+      wrap.style.marginBottom = '8px';
+      wrap.innerHTML = '<div class="req-card">'+r.id+': '+r.from+' → '+r.to+'</div>'+
+        '<div class="actions" style="margin-top:4px"><button class="cta" data-a="accept">Accept</button><button class="cta ghost" data-a="reject">Reject</button></div>';
+      wrap.querySelector('[data-a="accept"]').addEventListener('click', function(){ screenDecisionSteps(r, true); });
+      wrap.querySelector('[data-a="reject"]').addEventListener('click', function(){ screenDecisionSteps(r, false); });
+      list.appendChild(wrap);
+    });
+  }
+  document.getElementById('back').addEventListener('click', screenControlRoom);
+}
+
+function buildPostSteps(author, content){
+  var id;
+  return [
+    { code:'userRepository.findById("'+author+'");', detail:'exists' },
+    { code:'Post post = new Post(postId, "'+author+'", "'+content+'", ++postSeq);', detail:'sequence assigned for feed ordering',
+      effect:function(){ state.postSeq++; id='p'+state.postSeq; state.posts.push({id:id, author:author, content:content, seq:state.postSeq}); } },
+    { code:'postRepository.save(post);', detail:'stored' },
+    { code:'notifyNewPost("'+author+'", postId, content);', detail:'Observer fires -- ConsoleFeedListener prints it' }
+  ];
+}
+
+function screenPostSteps(author, content){
+  logDivider('— createPost('+author+', ...) —');
+  var steps=buildPostSteps(author, content), idx=0;
+  render();
+  function render(){
+    var el=document.getElementById('stage');
+    el.innerHTML='<h1>createPost("'+author+'", ...)</h1><p class="stage-cap">Tap through the real call chain.</p>'+
+      '<div class="actions"><button class="cta" id="next-step">Next step →</button></div>';
+    document.getElementById('next-step').addEventListener('click', function(){
+      var s=steps[idx]; logStep(s.code, s.detail, s.effect); idx++;
+      if (idx>=steps.length){ setTimeout(screenControlRoom, 200); } else { render(); }
+    });
+  }
+}
+
+function screenPickPoster(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Create a post</h1><p class="stage-cap">Who is posting?</p>'+
+    '<div class="choice-row">'+PEOPLE.map(function(p){ return '<button class="choice-btn" data-p="'+p+'"><span class="label">'+p+'</span></button>'; }).join('')+'</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-p]'), function(b){
+    b.addEventListener('click', function(){
+      var author = b.getAttribute('data-p');
+      var content = 'Hello from '+author+'!';
+      screenPostSteps(author, content);
+    });
+  });
+}
+
+function screenViewFeed(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>View a news feed</h1><p class="stage-cap">Pick whose feed to see (self + friends, newest first).</p>'+
+    '<div class="choice-row">'+PEOPLE.map(function(p){ return '<button class="choice-btn" data-p="'+p+'"><span class="label">'+p+'</span></button>'; }).join('')+'</div>';
+  Array.prototype.forEach.call(el.querySelectorAll('[data-p]'), function(b){
+    b.addEventListener('click', function(){
+      var userId = b.getAttribute('data-p');
+      var authorSet = state.friends[userId].concat([userId]);
+      var feed = state.posts.filter(function(p){ return authorSet.indexOf(p.author) >= 0; })
+        .sort(function(a,b2){ return b2.seq - a.seq; });
+      var el2=document.getElementById('stage');
+      el2.innerHTML='<h1>'+userId+'’s feed</h1><p class="stage-cap">getNewsFeed("'+userId+'", ChronologicalFeedStrategy)</p>'+
+        '<div class="feed-list">'+(feed.length ? feed.map(function(p){ return '<div class="feed-card"><span class="fauthor">'+p.author+'</span>'+esc(p.content)+'</div>'; }).join('') : '<div class="list-empty">(empty)</div>')+'</div>'+
+        '<div class="actions"><button class="cta ghost" id="back">← Back</button></div>';
+      document.getElementById('back').addEventListener('click', screenControlRoom);
+      logDivider('— getNewsFeed('+userId+') —');
+      logStep('Set<String> authorIds = friendshipRepository.getFriendsOf("'+userId+'"); authorIds.add("'+userId+'");',
+        'authors = {'+authorSet.join(', ')+'}');
+      logStep('rankingStrategy.rank(postRepository.findByAuthors(authorIds));', feed.length+' post(s), newest first');
+    });
+  });
+}
+
+function screenControlRoom(){
+  var el=document.getElementById('stage');
+  el.innerHTML='<h1>Control room</h1><p class="stage-cap">FacebookService, live.</p>'+
+    '<div class="section-label">People</div>'+renderPeopleHTML()+
+    '<div class="section-label">Pending requests</div>'+renderRequestsHTML(false)+
+    '<div class="actions">'+
+      '<button class="cta" id="req">Send friend request →</button>'+
+      '<button class="cta ghost" id="respond">Respond to a request →</button>'+
+      '<button class="cta ghost" id="post">Create a post →</button>'+
+      '<button class="cta ghost" id="feed">View a feed →</button>'+
+      '<button class="cta ghost" id="reset">Reset simulation ↻</button></div>';
+  document.getElementById('req').addEventListener('click', screenPickFrom);
+  document.getElementById('respond').addEventListener('click', screenPickRequestDecision);
+  document.getElementById('post').addEventListener('click', screenPickPoster);
+  document.getElementById('feed').addEventListener('click', screenViewFeed);
+  document.getElementById('reset').addEventListener('click', function(){
+    state = { friends:{Alice:[],Bob:[],Carol:[]}, requests:[], posts:[], reqSeq:0, postSeq:0 };
+    document.getElementById('trace-log').innerHTML='<div class="trace-empty">Send a friend request to start — every click below logs the real method call it triggers.</div>';
+    screenPickFrom();
+  });
+}
+
+screenPickFrom();
+})();
+</script>
+</body>
+</html>

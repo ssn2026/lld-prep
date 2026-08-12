@@ -33,7 +33,7 @@ problem's `README.md` banner (see `CLAUDE.md` → "Git Conventions").
 - [ ] Coupon Management System
 
 ### Social Networks
-- [ ] Facebook
+- [x] Facebook `[learning-mode]`
 - [ ] LinkedIn
 
 ### Games — Board
